@@ -1,3 +1,40 @@
+# =============================================================================
+# hermes_logging.py - 日志系统配置
+# =============================================================================
+#
+# 本模块提供中心化的日志设置，CLI 和网关都在启动时调用 setup_logging()。
+#
+# 日志文件位置: ~/.hermes/logs/ （支持多配置文件）
+#
+# 生成的日志文件：
+#   - agent.log:   INFO 级别以上，所有 Agent/工具/会话活动（主日志）
+#   - errors.log:  WARNING 级别以上，仅错误和警告（快速排查）
+#   - gateway.log: INFO 级别以上，仅网关事件（mode="gateway" 时创建）
+#   - gui.log:     INFO 级别以上，仪表盘/WebSocket/TUI 事件
+#
+# 安全设计：
+#   - 所有日志使用 RotatingFileHandler（自动轮转，防止磁盘占满）
+#   - RedactingFormatter 过滤敏感信息（不会将密钥写入磁盘）
+#   - Windows 上使用 concurrent-log-handler 避免轮转时的权限错误
+#
+# 组件分离：
+#   - gateway.log 只接收 gateway.* 日志器的记录
+#   - gui.log 接收仪表盘相关的记录
+#   - agent.log 是万能日志（所有内容都会进入）
+#
+# 会话上下文：
+#   - set_session_context(session_id): 在对话开始时设置
+#   - clear_session_context(): 在对话结束时清除
+#   - 所有日志行都会包含 [session_id] 便于过滤和关联
+#
+# 调用关系：
+#     cli.py / gateway/run.py 启动时
+#         → hermes_logging.py:setup_logging()
+#             → 配置日志级别、格式、处理器
+#             → 创建日志文件
+#             → 设置脱敏格式化器
+# =============================================================================
+
 """Centralized logging setup for Hermes Agent.
 
 Provides a single ``setup_logging()`` entry point that both the CLI and

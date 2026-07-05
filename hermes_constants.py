@@ -1,3 +1,26 @@
+# =============================================================================
+# hermes_constants.py - Hermes Agent 共享常量
+# =============================================================================
+#
+# 本模块定义 Hermes Agent 使用的全局常量。
+#
+# 设计原则：
+#   - 无任何依赖的安全模块（可以从任何地方导入，无循环导入风险）
+#   - 所有路径和配置通过函数提供
+#   - 支持环境变量覆盖
+#
+# 定义的常量：
+#   - 默认 API 端点 URL
+#   - 配置文件路径
+#   - 日志目录结构
+#   - 安全目录权限
+#
+# 调用关系：
+#     任何模块
+#         → from hermes_constants import get_hermes_home, OPENROUTER_BASE_URL
+#             → 获取配置路径、基础 URL 等常量
+# =============================================================================
+
 """Shared constants for Hermes Agent.
 
 Import-safe module with no dependencies — can be imported from anywhere

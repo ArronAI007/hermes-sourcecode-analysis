@@ -1,4 +1,47 @@
 #!/usr/bin/env python3
+# =============================================================================
+# trajectory_compressor.py - 轨迹压缩器
+# =============================================================================
+#
+# 本模块用于后处理已完成的 Agent 轨迹，将其压缩到目标 token 预算内，
+# 同时保持训练信号质量。
+#
+# 主要用途：
+#   - 减少训练数据的 token 数量（降低存储和计算成本）
+#   - 保留关键的学习信号（工具调用模式、错误恢复等）
+#   - 生成用于模型微调的高质量数据
+#
+# 压缩策略：
+#   1. 保护开始轮次（系统提示、用户消息、首次 AI 响应、首次工具调用）
+#   2. 保护最后 N 轮次（最终行动和结论）
+#   3. 仅压缩中间轮次（从第二个工具响应开始）
+#   4. 只压缩足以达到目标的部分
+#   5. 将被压缩区域替换为单个摘要消息
+#   6. 保留剩余工具调用完整（模型在摘要后继续工作）
+#
+# 使用方式：
+#     # 压缩目录下的所有 JSONL 文件
+#     python trajectory_compressor.py --input=data/my_run
+#
+#     # 压缩单个文件
+#     python trajectory_compressor.py --input=data/trajectories.jsonl
+#
+#     # 抽样 15% 进行压缩
+#     python trajectory_compressor.py --input=data/trajectories.jsonl --sample_percent=15
+#
+#     # 指定输出和 token 目标
+#     python trajectory_compressor.py --input=data/trajectories.jsonl --output=compressed.jsonl --target_max_tokens=16000
+#
+# 调用关系：
+#     batch_runner.py / mini_swe_runner.py 生成轨迹后
+#         → trajectory_compressor.py:compress_trajectory()
+#             → 分析 token 数量
+#             → 确定需压缩区域
+#             → 生成摘要
+#             → 替换中间轮次
+#             → 返回压缩后的轨迹
+# =============================================================================
+
 """
 Trajectory Compressor
 
@@ -16,16 +59,16 @@ Compression Strategy:
 Usage:
     # Compress a directory of JSONL files
     python trajectory_compressor.py --input=data/my_run
-    
+
     # Compress a single JSONL file
     python trajectory_compressor.py --input=data/trajectories.jsonl
-    
+
     # Compress 15% sample of a file
     python trajectory_compressor.py --input=data/trajectories.jsonl --sample_percent=15
-    
+
     # Compress with custom output and token target
     python trajectory_compressor.py --input=data/trajectories.jsonl --output=compressed.jsonl --target_max_tokens=16000
-    
+
     # Compress 10% sample from a directory
     python trajectory_compressor.py --input=data/my_run --sample_percent=10
 """

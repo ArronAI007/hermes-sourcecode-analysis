@@ -1,3 +1,44 @@
+# =============================================================================
+# mcp_serve.py - Hermes MCP 服务端入口
+# =============================================================================
+#
+# 本模块启动一个 stdio MCP 服务器，将 Hermes 的消息会话暴露为 MCP 工具。
+# 任何 MCP 客户端（Claude Code、Cursor、Codex 等）都可以：
+#   - 列出会话
+#   - 读取消息历史
+#   - 发送消息
+#   - 轮询实时事件
+#   - 管理审批请求
+#
+# 对应 OpenClaw 的 9工具 MCP 渠道桥接表面：
+#   conversations_list, conversation_get, messages_read, attachments_fetch,
+#   events_poll, events_wait, messages_send, permissions_list_open,
+#   permissions_respond
+#
+# 此外还有 Hermes 特有的 channels_list 工具。
+#
+# 使用方式：
+#     hermes mcp serve
+#     hermes mcp serve --verbose
+#
+# MCP 客户端配置示例（claude_desktop_config.json）：
+#     {
+#         "mcpServers": {
+#             "hermes": {
+#                 "command": "hermes",
+#                 "args": ["mcp", "serve"]
+#             }
+#         }
+#     }
+#
+# 调用关系：
+#     CLI $ hermes mcp serve
+#         → mcp_serve.py:main()
+#             → 启动 stdio MCP 服务器
+#             → 注册工具
+#             → 等待客户端连接
+# =============================================================================
+
 """
 Hermes MCP Server — expose messaging conversations as MCP tools.
 

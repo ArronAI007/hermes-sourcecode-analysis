@@ -1,4 +1,44 @@
 #!/usr/bin/env python3
+# =============================================================================
+# mini_swe_runner.py - 软件工程运行器
+# =============================================================================
+#
+# 本模块使用 Hermes Agent 的内置执行环境（本地、Docker、Modal），
+# 输出 Hermes 格式的轨迹，兼容 batch_runner.py 和 trajectory_compressor.py。
+#
+# 主要用途：
+#   - SWE-bench 类任务的执行（软件工程问题解决）
+#   - 训练数据生成（产生高质量的工具调用轨迹）
+#   - 模型评估（在标准化任务上测试 Agent 性能）
+#
+# 支持的执行环境：
+#   - local: 本地环境（最快，无隔离）
+#   - docker: Docker 容器（隔离环境，可复现）
+#   - modal: Modal 云沙盒（无需维护基础设施）
+#
+# 轨迹格式：
+#   - 使用 Hermes 标准的 from/value 对
+#   - 包含 <tool_call> 和 <tool_response> XML 标记
+#   - 兼容轨迹压缩管道
+#
+# 使用方式：
+#     # 单个任务
+#     python mini_swe_runner.py --task "Create a hello world Python script" --env local
+#
+#     # Docker 环境
+#     python mini_swe_runner.py --task "List files in /tmp" --env docker --image python:3.11-slim
+#
+#     # 批量模式
+#     python mini_swe_runner.py --prompts_file prompts.jsonl --output_file trajectories.jsonl --env docker
+#
+# 调用关系：
+#     CLI $ python mini_swe_runner.py
+#         → mini_swe_runner.py:main()
+#             → 初始化执行环境
+#             → AIAgent.run_conversation()
+#             → 保存轨迹到 JSONL
+# =============================================================================
+
 """
 SWE Runner with Hermes Trajectory Format
 
@@ -15,13 +55,13 @@ Features:
 Usage:
     # Run a single task with local environment
     python mini_swe_runner.py --task "Create a hello world Python script" --env local
-    
+
     # Run with Docker
     python mini_swe_runner.py --task "List files in /tmp" --env docker --image python:3.11-slim
-    
+
     # Run with Modal (cloud)
     python mini_swe_runner.py --task "Install numpy and test it" --env modal --image python:3.11-slim
-    
+
     # Batch mode from JSONL file
     python mini_swe_runner.py --prompts_file prompts.jsonl --output_file trajectories.jsonl --env docker
 """

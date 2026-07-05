@@ -1,4 +1,44 @@
 #!/usr/bin/env python3
+# =============================================================================
+# batch_runner.py - 批量任务运行器
+# =============================================================================
+#
+# 本模块提供并行批量处理能力，用于在数据集上运行 Agent。
+# 主要用于研究和训练数据生成。
+#
+# 主要功能：
+#   1. 数据集加载和批次划分
+#   2. 多进程并行处理（多核 CPU 利用）
+#   3. 断点续传（容错和恢复）
+#   4. 轨迹保存（标准格式的 from/value 对）
+#   5. 工具使用统计汇总
+#
+# 使用方式：
+#     # 基本用法
+#     python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=my_run
+#
+#     # 恢复中断的运行
+#     python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=my_run --resume
+#
+#     # 使用特定工具集分布
+#     python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=my_run --distribution=image_gen
+#
+# 架构流程：
+#     加载数据集 (JSONL)
+#         → 划分批次
+#         → 多进程池并行执行
+#             → 每个进程: AIAgent.run_conversation()
+#             → 保存轨迹和结果
+#         → 汇总统计
+#
+# 调用关系：
+#     CLI $ python batch_runner.py
+#         → batch_runner.py:main()
+#             → load_dataset()        # 加载 JSONL 数据集
+#             → process_batches()     # 批量处理
+#             → save_trajectories()   # 保存轨迹
+# =============================================================================
+
 """
 Batch Agent Runner
 
@@ -12,10 +52,10 @@ across multiple prompts from a dataset. It includes:
 
 Usage:
     python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=my_run
-    
+
     # Resume an interrupted run
     python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=my_run --resume
-    
+
     # Use a specific toolset distribution
     python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=my_run --distribution=image_gen
 """
