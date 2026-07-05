@@ -1,4 +1,48 @@
 #!/usr/bin/env python3
+# =============================================================================
+# tools/mcp_tool.py - MCP (Model Context Protocol) 客户端支持
+# =============================================================================
+#
+# 本模块实现 MCP 协议客户端，连接外部 MCP 服务器并将其工具注册到
+# Hermes Agent 的工具注册表中，使 Agent 可以像调用内置工具一样调用外部工具。
+#
+# 支持的传输协议：
+#   1. stdio — 本地子进程（通过标准输入/输出通信）
+#   2. HTTP/StreamableHTTP — 基于 HTTP 的流式传输
+#   3. SSE — Server-Sent Events 长连接
+#
+# 配置位置：~/.hermes/config.yaml 下的 ``mcp_servers`` 键
+#
+# 工作流程：
+#   1. 读取配置，初始化各 MCP 服务器连接
+#   2. 发送 ``tools/list`` 请求发现可用工具
+#   3. 将外部工具注册到 Hermes 工具注册表
+#   4. 当 Agent 调用工具时，通过对应的传输发送给 MCP 服务器
+#   5. 返回结果给 Agent
+#
+# 可选功能 - 采样（Sampling）：
+#   - 允许 MCP 服务器发起 LLM 请求（由服务器主动调用）
+#   - 需要配置 sampling 节点
+#   - 支持模型覆盖、token 限制、速率控制
+#
+# 依赖说明：
+#   - ``mcp`` Python 包是可选的
+#   - 未安装时本模块为空操作，仅记录 debug 日志
+#
+# 调用关系：
+#     agent_init.py / cli.py → 启动时初始化
+#         → tools/mcp_tool.py → init_mcp_servers()
+#             → 读取配置
+#             → 连接各 MCP 服务器
+#             → 发现工具并注册
+#             → 启动健康检查守护线程
+#
+#     run_agent.py → handle_function_call()
+#         → tools/mcp_tool.py → call_mcp_tool()
+#             → 通过传输发送给 MCP 服务器
+#             → 返回结果
+# =============================================================================
+
 """
 MCP (Model Context Protocol) Client Support
 

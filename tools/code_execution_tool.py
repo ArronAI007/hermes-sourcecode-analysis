@@ -1,4 +1,50 @@
 #!/usr/bin/env python3
+# =============================================================================
+# tools/code_execution_tool.py - 代码沙箱执行工具 (PTC)
+# =============================================================================
+#
+# 本模块实现程序化工具调用（Programmatic Tool Calling），允许 LLM 编写 Python 脚本
+# 通过 RPC 调用 Hermes 工具，将多步工具链折叠为单个推理轮次。
+#
+# 核心价值：
+#   - 减少上下文窗口消耗（中间工具结果不进入对话）
+#   - 支持复杂的批量操作和条件逻辑
+#   - 支持本地和远程执行环境
+#
+# 两种运行模式：
+#
+# 1. 本地后端（UDS - Unix Domain Socket）：
+#    - 父进程生成带 UDS RPC 函数的 hermes_tools.py 存根
+#    - 父进程创建 Unix 域套接字并启动 RPC 监听线程
+#    - 父进程生成子进程运行 LLM 的脚本
+#    - 工具调用通过 UDS 传回父进程派发
+#
+# 2. 远程后端（基于文件的 RPC）：
+#    - 父进程生成带文件 RPC 存根的 hermes_tools.py
+#    - 父进程将文件传输到远程环境（Docker/SSH/Modal/Daytona 等）
+#    - 脚本在终端后端内运行
+#    - 工具调用写入请求文件，父进程轮询读取并派发
+#    - 脚本轮询响应文件并继续执行
+#
+# 安全设计：
+#   - 只返回脚本的 stdout 给 LLM
+#   - 中间工具结果永远不进入上下文窗口
+#   - 子进程隔离（独立进程/容器）
+#   - 支持超时和资源限制
+#
+# 平台限制：
+#   - 本地模式: 仅支持 Linux/macOS（Unix 域套接字），Windows 上禁用
+#   - 远程模式: 需要终端后端安装 Python 3
+#
+# 调用关系：
+#     run_agent.py → handle_function_call()
+#         → tools/code_execution_tool.py:execute_code()
+#             → 生成 hermes_tools.py 存根
+#             → 启动 RPC 监听器（本地）或传输文件（远程）
+#             → 生成并运行子进程
+#             → 收集 stdout 返回给 LLM
+# =============================================================================
+
 """
 Code Execution Tool -- Programmatic Tool Calling (PTC)
 

@@ -1,3 +1,39 @@
+# =============================================================================
+# agent/error_classifier.py - API 错误分类与智能故障转移
+# =============================================================================
+#
+# 本模块提供结构化的 API 错误分类系统，用于决定故障发生时的恢复策略。
+#
+# 核心职责：
+#   1. 将错误分类为结构化的错误类型（FailoverReason 枚举）
+#   2. 根据错误类型确定恢复动作：
+#      - 重试 (retry)
+#      - 轮换凭证 (rotate credential)
+#      - 故障转移到其他提供商 (fallback)
+#      - 压缩上下文 (compress context)
+#      - 中止 (abort)
+#
+# 错误分类（按优先级排序）：
+#   1. 认证/授权错误 (401/403)
+#   2. 计费/配额错误 (402/429)
+#   3. 服务器错误 (500/502/503)
+#   4. 连接超时
+#   5. 上下文/负载过大
+#   6. 模型/提供商策略错误
+#
+# 设计优势：
+#   - 替代了分散的内联字符串匹配
+#   - 集中式分类器供 run_agent.py 的主重试循环使用
+#   - 可扩展的错误类别，支持新的错误模式
+#
+# 调用关系：
+#     run_agent.py → _call_llm() 失败
+#         → error_classifier.py:classify_error()
+#             → 解析异常类型和 HTTP 状态码
+#             → 返回 FailoverReason
+#             → run_agent.py 执行对应的恢复策略
+# =============================================================================
+
 """API error classification for smart failover and recovery.
 
 Provides a structured taxonomy of API errors and a priority-ordered

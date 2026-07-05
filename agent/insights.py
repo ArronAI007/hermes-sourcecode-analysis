@@ -1,3 +1,36 @@
+# =============================================================================
+# agent/insights.py - 会话洞察分析引擎
+# =============================================================================
+#
+# 本模块分析 SQLite 状态数据库中的历史会话数据，
+# 生成全面的使用洞察报告。
+#
+# 分析内容：
+#   - Token 消耗统计（输入/输出/缓存）
+#   - 成本估算（基于 agent.usage_pricing 的定价数据）
+#   - 工具使用模式（哪些工具被频繁使用）
+#   - 活动趋势（每日/每周活动量）
+#   - 模型和平台分布（使用哪些模型和提供商）
+#   - 会话指标（平均时长、轮次数、工具调用次数）
+#
+# 灵感来源：Claude Code 的 /insights 命令
+# 适配了 Hermes Agent 的多平台架构，增加了成本估算和平台分析能力。
+#
+# 使用方式：
+#     from agent.insights import InsightsEngine
+#     engine = InsightsEngine(db)
+#     report = engine.generate(days=30)
+#     print(engine.format_terminal(report))
+#
+# 调用关系：
+#     cli.py / gateway/slash_commands.py
+#         → agent/insights.py:InsightsEngine.generate()
+#             → 查询 SQLite 数据库
+#             → 分析会话记录
+#             → 计算统计指标
+#             → 返回报告字典
+# =============================================================================
+
 """
 Session Insights Engine for Hermes Agent.
 
