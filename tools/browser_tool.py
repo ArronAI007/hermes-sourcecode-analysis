@@ -1,4 +1,50 @@
 #!/usr/bin/env python3
+# =============================================================================
+# tools/browser_tool.py - 浏览器自动化工具
+# =============================================================================
+#
+# 本模块提供浏览器自动化功能，通过 agent-browser CLI 实现。
+# 支持多种后端，对 Agent 呈现统一的行为接口。
+#
+# 支持的后端：
+# 1. **本地模式**（默认）: 零成本的无头 Chromium
+#    - 通过 ``agent-browser install`` 安装（下载 Chromium）
+#    - 支持无显示服务器的 Linux 环境
+# 2. **Browser Use** 云端（Nous 订阅者默认）
+# 3. **Browserbase** 云端（需要 API Key）
+#
+# 核心特性：
+#   - 基于无障碍树（ariaSnapshot）的文本化页面表示
+#     → 适合无视觉能力的 LLM Agent
+#   - 按 task_id 隔离会话
+#   - 通过 ref 选择器交互（@e1, @e2 等）
+#   - 任务感知的内容提取（使用 LLM 摘要）
+#   - 自动清理浏览器会话
+#
+# 环境变量：
+#   - BROWSERBASE_API_KEY: Browserbase API 密钥
+#   - BROWSERBASE_PROJECT_ID: Browserbase 项目 ID
+#   - BROWSER_USE_API_KEY: Browser Use API 密钥
+#   - BROWSERBASE_PROXIES: 启用住宅代理（默认 "true"）
+#   - BROWSERBASE_ADVANCED_STEALTH: 高级隐身模式（需要 Scale 计划）
+#   - BROWSERBASE_KEEP_ALIVE: 断连后保持会话（默认 "true"）
+#   - BROWSERBASE_SESSION_TIMEOUT: 会话超时（最大 21600秒=6小时）
+#
+# 调用关系：
+#     run_agent.py → handle_function_call()
+#         → tools/browser_tool.py
+#             → browser_navigate()   # 导航到 URL
+#             → browser_snapshot()   # 获取页面快照
+#             → browser_click()     # 点击元素
+#             → browser_type()      # 输入文本
+#
+# 使用示例：
+#     from tools.browser_tool import browser_navigate, browser_snapshot, browser_click
+#     result = browser_navigate("https://example.com", task_id="task_123")
+#     snapshot = browser_snapshot(task_id="task_123")
+#     browser_click("@e5", task_id="task_123")
+# =============================================================================
+
 """
 Browser Tool Module
 

@@ -1,3 +1,38 @@
+# =============================================================================
+# gateway/slash_commands.py - 斜杠命令处理器
+# =============================================================================
+#
+# 本模块包含 GatewayRunner 的所有斜杠命令处理器，从 ``gateway/run.py`` 中
+# 抽取出来以减少神类文件的大小。
+#
+# 包含 42 个命令（约 3200 行代码）：
+#   - /model     — 切换模型
+#   - /reset     — 复位会话
+#   - /usage     — 查看用量
+#   - /compress  — 手动压缩上下文
+#   - /tools     — 列出工具
+#   - /status    — 查看状态
+#   - /help      — 显示帮助
+#   - ... 等其他 35+ 个命令
+#
+# 设计模式：
+#   - 以 Mixin 形式被 GatewayRunner 继承
+#   - 通过 MRO 保持所有 ``self._handle_*_command`` 调度
+#   - 测试引用通过 MRO 继续工作
+#
+# 避免循环导入：
+#   - 需要的 run.py 模块级辅助函数采用懒加载
+#   - 在处理器体内部执行 ``from gateway.run import ...``
+#   - 调用时 run.py 已完全加载，不会产生循环依赖
+#
+# 调用关系：
+#     gateway/run.py:GatewayRunner._handle_message()
+#         → 检测以 "/" 开头的消息
+#         → slash_commands.py:_handle_*_command()
+#             → 执行对应的命令逻辑
+#             → 返回响应给用户
+# =============================================================================
+
 """Gateway slash-command handlers for GatewayRunner.
 
 Extracted from ``gateway/run.py`` (god-file decomposition Phase 3b). These are

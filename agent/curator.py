@@ -1,3 +1,33 @@
+# =============================================================================
+# agent/curator.py - 技能管理器（自我学习系统）
+# =============================================================================
+#
+# 本模块是 Hermes Agent 的**自我学习循环**的核心组成部分，负责管理和优化技能库。
+#
+# 运行机制：
+#   - 非 cron 定时触发，而是空闲触发
+#   - 当 Agent 空闲且距离上次运行超过 interval_hours 时
+#   - maybe_run_curator() 会生成一个 fork 的 AIAgent 进行审查
+#
+# 职责：
+#   1. 自动转换技能生命周期状态（基于活动时间戳）
+#   2. 生成后台审查 Agent （可以置顶 / 归档 / 合并 / 补丁技能）
+#   3. 持久化管理器状态（last_run_at, paused 等）到 .curator_state 文件
+#
+# 严格不变式（安全设计）：
+#   - 只操作 Agent 创建的技能（通过 tools/skill_usage.is_agent_created 检查）
+#   - 永远不自动删除 — 只归档。归档是可恢复的
+#   - 置顶的技能绕过所有自动转换
+#   - 使用辅助客户端，不触及主会话的提示缓存
+#
+# 调用关系：
+#     conversation_loop.py → _post_turn_cleanup()
+#         → curator.py:maybe_run_curator()
+#             → 检查空闲时间
+#             → 生成审查 Agent
+#             → 执行技能审查
+# =============================================================================
+
 """Curator — background skill maintenance orchestrator.
 
 The curator is an auxiliary-model task that periodically reviews agent-created

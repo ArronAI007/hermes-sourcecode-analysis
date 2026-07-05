@@ -1,3 +1,36 @@
+# =============================================================================
+# agent/context_compressor.py - 上下文窗口压缩算法
+# =============================================================================
+#
+# 本模块实现自动上下文窗口压缩，当对话历史超过模型的上下文限制时触发。
+#
+# 核心设计：
+#   - 使用辅助模型（便宜/快速）摘要中间轮次
+#   - 保护头部（系统提示和早期上下文）和尾部（最近消息）
+#   - 迭代式摘要更新（多次压缩时保留信息）
+#
+# v3 改进（相比 v2）：
+#   - 结构化摘要模板（跟踪已解决/待处理问题）
+#   - 安全的摘要前引（将之前轮次视为参考材料，而非活动指令）
+#   - "历史"标题（替代 "Next Steps"，避免被误认为当前任务）
+#   - Token 预算尾部保护（替代固定消息数）
+#   - 工具输出剪枝（在 LLM 摘要前先进行便宜的预处理）
+#   - 动态摘要预算（与压缩内容成比例）
+#   - 更丰富的工具调用/结果细节
+#
+# 调用关系：
+#     conversation_loop.py → _maybe_compress_context()
+#         → context_compressor.py:ContextCompressor.compress()
+#             → _prune_tool_outputs()      # 剪枝工具输出
+#             → _summarize_with_llm()      # LLM 摘要
+#             → _merge_summary()           # 合并摘要到对话
+#
+# 安全设计：
+#   - 摘要标注为 "[CONTEXT COMPACTION — REFERENCE ONLY]"
+#   - 明确告诉 LLM 不要执行摘要中的请求
+#   - 只作为背景参考，非活动指令
+# =============================================================================
+
 """Automatic context window compression for long conversations.
 
 Self-contained class with its own OpenAI client for summarization.
