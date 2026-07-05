@@ -1,3 +1,39 @@
+# =============================================================================
+# agent/usage_pricing.py - Token 用量与成本估算
+# =============================================================================
+#
+# 本模块负责将 LLM API 的原始用量数据转换为可读的成本估算。
+#
+# 核心功能：
+#   1. 解析各提供商的用量响应（格式不统一）
+#   2. 查询定价数据（每百万 token 的价格）
+#   3. 计算费用（支持缓存、推理 token 等）
+#   4. 追踪成本来源和精度
+#
+# 支持的用量类型（CanonicalUsage）：
+#   - input_tokens: 输入 token（包括系统提示和用户消息）
+#   - output_tokens: 输出 token（助理生成的文本）
+#   - cache_read_tokens: 缓存读取 token（更便宜或免费）
+#   - cache_write_tokens: 缓存写入 token
+#   - reasoning_tokens: 推理过程 token（如 o1 系列）
+#
+# 定价数据来源（按优先级）：
+#   1. 提供商成本 API
+#   2. 提供商模型 API
+#   3. 官方文档快照
+#   4. 用户覆盖
+#   5. 自定义合约
+#
+# 调用关系：
+#     conversation_loop.py → 接收 LLM 响应
+#         → agent/usage_pricing.py:CanonicalUsage()
+#             → estimate_usage_cost()  # 计算费用
+#             → format_duration_compact()  # 格式化显示
+#
+#     agent/insights.py → 分析历史会话
+#         → agent/usage_pricing.py → 批量计算成本
+# =============================================================================
+
 from __future__ import annotations
 
 import re
@@ -15,38 +51,46 @@ _ZERO = Decimal("0")
 _ONE_MILLION = Decimal("1000000")
 _NOUS_DEFAULT_BASE_URL = "https://inference-api.nousresearch.com/v1"
 
+# ---- 成本状态和来源类型 ----
 CostStatus = Literal["actual", "estimated", "included", "unknown"]
 CostSource = Literal[
-    "provider_cost_api",
-    "provider_generation_api",
-    "provider_models_api",
-    "official_docs_snapshot",
-    "user_override",
-    "custom_contract",
-    "none",
+    "provider_cost_api",      # 提供商成本 API
+    "provider_generation_api", # 提供商生成 API
+    "provider_models_api",    # 提供商模型 API
+    "official_docs_snapshot",  # 官方文档快照
+    "user_override",          # 用户覆盖
+    "custom_contract",        # 自定义合约
+    "none",                   # 无定价
 ]
 
 
 @dataclass(frozen=True)
 class CanonicalUsage:
-    input_tokens: int = 0
-    output_tokens: int = 0
-    cache_read_tokens: int = 0
-    cache_write_tokens: int = 0
-    reasoning_tokens: int = 0
-    request_count: int = 1
-    raw_usage: Optional[dict[str, Any]] = None
+    """
+    标准化的用量表示，统一各提供商不同的用量格式。
+
+    支持缓存和推理 token 的跟踪，确保成本估算的准确性。
+    """
+    input_tokens: int = 0          # 输入 token
+    output_tokens: int = 0         # 输出 token
+    cache_read_tokens: int = 0     # 缓存读取 token（通常更便宜）
+    cache_write_tokens: int = 0    # 缓存写入 token
+    reasoning_tokens: int = 0      # 推理过程 token
+    request_count: int = 1         # 请求次数（用于平均成本）
+    raw_usage: Optional[dict[str, Any]] = None  # 原始用量数据
 
     @property
     def prompt_tokens(self) -> int:
+        """提示 token 总数 = 输入 + 缓存读取 + 缓存写入"""
         return self.input_tokens + self.cache_read_tokens + self.cache_write_tokens
 
     @property
     def total_tokens(self) -> int:
+        """总 token 数 = 提示 token + 输出 token"""
         return self.prompt_tokens + self.output_tokens
 
     def __add__(self, other: "CanonicalUsage") -> "CanonicalUsage":
-        """Sum two usage buckets (e.g. MoA advisor fan-out + aggregator).
+        """合并两个用量实例（如 MoA 顾问扩散 + 聚合器）。
 
         ``raw_usage`` is dropped on the sum — it describes a single API
         response and cannot be meaningfully merged. ``request_count`` adds so

@@ -1,3 +1,41 @@
+# =============================================================================
+# gateway/platform_registry.py - 平台适配器注册表
+# =============================================================================
+#
+# 本模块允许平台适配器（内置和插件）自我注册，
+# 使网关能够无需硬编码的 if/elif 链条件来发现和实例化它们。
+#
+# 注册机制：
+#   1. 插件适配器通过 PluginContext.register_platform() 注册
+#   2. 注册的适配器会被优先查找
+#   3. 如果注册表中没有找到，网关会回退到传统的 if/elif 代码路径
+#
+# 内置适配器：
+#   - 目前仍使用 _create_adapter() 中的 if/elif 链
+#   - 未来可能迁移到注册表模式
+#
+# 使用方式（插件端）：
+#     from gateway.platform_registry import platform_registry, PlatformEntry
+#     platform_registry.register(PlatformEntry(
+#         name="irc",
+#         label="IRC",
+#         adapter_factory=lambda cfg: IRCAdapter(cfg),
+#         check_fn=check_requirements,
+#         validate_config=lambda cfg: bool(cfg.extra.get("server")),
+#         required_env=["IRC_SERVER"],
+#         install_hint="pip install irc",
+#     ))
+#
+# 使用方式（网关端）：
+#     adapter = platform_registry.create_adapter("irc", platform_config)
+#
+# 调用关系：
+#     gateway/run.py:GatewayRunner.start()
+#         → platform_registry.create_adapter(platform_name, config)
+#             → 查找注册的适配器
+#             → 如果未找到，回退到传统代码路径
+# =============================================================================
+
 """
 Platform Adapter Registry
 

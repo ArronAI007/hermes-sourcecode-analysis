@@ -1,3 +1,41 @@
+# =============================================================================
+# hermes_cli/auth.py - 多提供商认证系统
+# =============================================================================
+#
+# 本模块是 Hermes Agent 的认证中心，支持多种认证流和凭证管理。
+#
+# 支持的认证方式：
+#   1. OAuth 设备码流程（Nous Portal）
+#      - 用户访问授权 URL 输入代码
+#      - 轮询获取 access_token 和 refresh_token
+#   2. 传统 API Key（OpenRouter、自定义端点）
+#      - 直接使用配置的 API 密钥
+#   3. JWT Token（推荐方式）
+#      - 使用已有的有效 access_token
+#
+# 架构组件：
+#   - ProviderConfig: 定义已知的 OAuth 提供商配置
+#   - Auth store: 在 ~/.hermes/auth.json 中持久化凭证状态
+#   - 文件锁: 跨进程安全写入
+#   - resolve_provider(): 通过优先级链选择活动提供商
+#
+# 凭证管理流程：
+#   1. 登录: OAuth 流程获取 token
+#   2. 刷新: 自动使用 refresh_token 更新 access_token
+#   3. 运行时: 解析当前有效的凭证
+#   4. 退出: 清除 auth.json 中的凭证
+#
+# 调用关系：
+#     cli.py → hermes_cli/auth.py
+#         → login_command()      # 登录流程
+#         → resolve_provider()   # 选择提供商
+#         → resolve_credentials() # 获取运行时凭证
+#         → logout_command()     # 退出流程
+#
+#     agent_init.py → 初始化时
+#         → resolve_runtime_credentials() # 自动刷新过期 token
+# =============================================================================
+
 """
 Multi-provider authentication system for Hermes Agent.
 

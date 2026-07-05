@@ -1,3 +1,39 @@
+# =============================================================================
+# agent/redact.py - 敏感信息脱敏处理
+# =============================================================================
+#
+# 本模块通过正则表达式匹配，在日志、工具输出和网关日志中屏蔽敏感信息。
+#
+# 处理对象：
+#   - API 密钥（sk-xxx, ghp_xxx 等）
+#   - OAuth token（access_token, refresh_token）
+#   - 密码和凭证
+#   - 签名和授权码
+#   - URL 中的敏感参数
+#
+# 脱敏策略：
+#   - 短 token (< 18 字符): 完全屏蔽
+#   - 长 token: 保留前 6 个和后 4 个字符，便于调试
+#   - 查询参数: 完全屏蔽值
+#   - JSON/form 中的敏感键: 屏蔽值保留键
+#
+# 安全设计：
+#   - 在日志记录之前执行脱敏
+#   - 在工具输出返回之前执行脱敏
+#   - 在网关消息发送之前执行脱敏
+#
+# 调用关系：
+#     conversation_loop.py → 收到工具结果
+#         → agent/redact.py:redact_sensitive_text()
+#             → 匹配敏感模式
+#             → 替换为屏蔽文本
+#             → 返回安全的输出
+#
+#     gateway/run.py → 发送消息之前
+#         → agent/redact.py:redact_sensitive_text()
+#             → 确保不会泄露用户凭证
+# =============================================================================
+
 """Regex-based secret redaction for logs and tool output.
 
 Applies pattern matching to mask API keys, tokens, and credentials

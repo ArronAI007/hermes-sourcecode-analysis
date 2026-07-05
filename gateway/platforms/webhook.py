@@ -1,3 +1,40 @@
+# =============================================================================
+# gateway/platforms/webhook.py - 通用 Webhook 平台适配器
+# =============================================================================
+#
+# 本模块运行一个 aiohttp HTTP 服务器，接收来自外部服务的 Webhook POST 请求
+# （GitHub、GitLab、JIRA、Stripe 等），验证 HMAC 签名，将负载转换为
+# Agent 提示，并将响应路由回源或另一个平台。
+#
+# 配置位置：config.yaml 中的 platforms.webhook.extra.routes
+# 每个路由定义：
+#   - events: 接受的事件类型（基于请求头过滤）
+#   - secret: HMAC 密钥用于签名验证（必填）
+#   - prompt: 使用 Webhook 负载格式化的模板字符串
+#   - skills: 可选，加载的技能列表
+#   - deliver: 响应发送位置（github_comment、telegram 等）
+#   - deliver_extra: 额外的投送配置（repo、pr_number、chat_id）
+#   - deliver_only: 如果为 true，跳过 Agent — 直接投送渲染的提示
+#     适用于推送通知、监控告警、Agent 间 ping 等场景
+#     这些场景更看重零 LLM 成本和亚秒级投送速度
+#
+# 安全机制：
+#   - 每个路由必须配置 HMAC secret（启动时验证）
+#   - 每路由支持独立的速率限制（固定窗口期）
+#   - 幂等性缓存防止 Webhook 重试时的重复执行
+#   - 读取负载前检查体大小限制
+#   - 设置 secret 为 "INSECURE_NO_AUTH" 可跳过验证（仅用于测试）
+#
+# 调用关系：
+#     外部服务 → POST /webhook/<route>
+#         → webhook.py:on_webhook_received()
+#             → 验证 HMAC 签名
+#             → 解析事件类型
+#             → 构建提示
+#             → 调用 Agent（或直接投送）
+#             → 返回响应
+# =============================================================================
+
 """Generic webhook platform adapter.
 
 Runs an aiohttp HTTP server that receives webhook POSTs from external
