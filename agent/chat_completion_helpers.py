@@ -1,3 +1,31 @@
+# =============================================================================
+# agent/chat_completion_helpers.py - 对话完成辅助函数
+# =============================================================================
+#
+# 本模块提供 chat-completions 代码路径的辅助函数，从 AIAgent 类中抽取出来以保持代码整洁。
+#
+# 包含的功能：
+# 1. 非流式 API 调用（发送完整请求并等待响应）
+# 2. 请求参数构建（temperature、max_tokens 等）
+# 3. 助理消息实体化（将 API 响应转换为内部格式）
+# 4. 提供商故障转移激活（主提供商失败时切换备份）
+# 5. 最大迭代次数处理
+# 6. 每轮资源清理（释放临时资源）
+#
+# 设计模式：
+#   - 每个函数的第一个参数都是 AIAgent 实例（命名为 agent）
+#   - AIAgent 类保留薄的转发方法，保持调用点不变
+#   - 测试中 mock 的符号（如 cleanup_vm、cleanup_browser）通过 _ra 解析
+#
+# 调用关系：
+#     conversation_loop.py → _call_llm()
+#         → chat_completion_helpers.py
+#             → _build_request_kwargs()    # 构建请求参数
+#             → _chat_completion()         # 发送 API 请求
+#             → _materialize_assistant()  # 处理响应
+#             → _activate_fallback()      # 故障转移
+# =============================================================================
+
 """Helper functions for the chat-completions code path.
 
 Extracted from :class:`AIAgent` for cleanliness — bodies of the

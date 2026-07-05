@@ -1,3 +1,39 @@
+# =============================================================================
+# hermes_cli/config.py - 配置管理模块
+# =============================================================================
+#
+# 本模块是 Hermes Agent 的核心配置管理系统，负责加载、验证、保存和提供配置。
+#
+# 配置文件存储位置：
+#   - ~/.hermes/config.yaml  - 所有设置（模型、工具集、终端等）
+#   - ~/.hermes/.env         - API 密钥和机密
+#
+# 提供的 CLI 命令：
+#   - hermes config          - 显示当前配置
+#   - hermes config edit     - 用编辑器打开配置
+#   - hermes config set      - 设置特定值
+#   - hermes config wizard   - 重新运行设置向导
+#
+# 配置加载优先级：
+#   1. 命令行参数
+#   2. 环境变量
+#   3. ~/.hermes/config.yaml
+#   4. 默认值（DEFAULT_CONFIG）
+#
+# 关键特性：
+#   - YAML 格式配置，支持注释
+#   - 配置验证和类型转换
+#   - 损坏配置文件自动备份
+#   - 线程安全的配置访问
+#
+# 调用关系：
+#     cli.py → load_cli_config()
+#         → hermes_cli/config.py → load_config()
+#             → 读取 ~/.hermes/config.yaml
+#             → 合并环境变量
+#             → 返回配置字典
+# =============================================================================
+
 """
 Configuration management for Hermes Agent.
 

@@ -1,4 +1,34 @@
 #!/usr/bin/env python3
+# =============================================================================
+# terminal_tool.py - 终端命令执行工具
+# =============================================================================
+#
+# 本模块提供跨平台的命令行执行能力，支持多种运行环境：
+# - 本地执行（最快）
+# - Docker 容器（隔离环境，需要 Docker）
+# - Modal 云沙盒（无服务器运行，按使用计费）
+# - SSH 远程执行
+# - Singularity 容器
+# - Daytona 开发环境
+#
+# 主要功能：
+# 1. 执行 shell 命令并捕获输出
+# 2. 支持后台任务执行（非阻塞）
+# 3. 管理 VM/容器生命周期
+# 4. 空闲时自动清理资源
+# 5. 支持 sudo 密码提示
+#
+# 调用关系：
+#     run_agent.py → handle_function_call()
+#         → tools/terminal_tool.py → terminal_tool()
+#             → _execute_local() / _execute_docker() / _execute_modal()
+#
+# 使用示例：
+#     from terminal_tool import terminal_tool
+#     result = terminal_tool("ls -la")  # 本地执行
+#     result = terminal_tool("python server.py", background=True)  # 后台执行
+# =============================================================================
+
 """
 Terminal Tool Module
 
