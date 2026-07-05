@@ -47,12 +47,17 @@ Idempotent: safe to call multiple times.  ``_bootstrap_once`` guards
 against double-reconfigure.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # 启用向未来版本兼容的类型注解（如 list[str] 而非 typing.List[str]）
 
-import os
-import sys
+import os    # 操作系统接口，用于设置环境变量、文件路径操作
+import sys   # 系统特定参数和函数，用于调整 Python 运行时的模块搜索路径和标准输入/输出
 
+# 检测当前操作系统是否为 Windows（包括 win32 和 cygwin 等变种）
+# 这决实了是否需要应用 Windows 特定的 UTF-8 修复
 _IS_WINDOWS = sys.platform == "win32"
+
+# 守护标志位，确保 bootstrap 只执行一次（幂等性）
+# 即使多个模块导入此模块，也不会重复执行
 _bootstrap_applied = False
 
 
@@ -123,73 +128,95 @@ def apply_windows_utf8_bootstrap() -> bool:
 
 
 def harden_import_path(src_root: str | None = None) -> None:
-    """Stop a package in the current directory from shadowing Hermes modules.
+    """防止当前目录下的同名包覆盖 Hermes 内部模块。
 
-    Hermes ships top-level modules with common names (``utils``, ``proxy``,
-    ``ui``).  Python always seeds ``sys.path`` with the current directory, so
-    launching an entry point from a project that has its own ``utils/`` package
-    makes ``from utils import ...`` resolve to the *user's* package and crash
-    with an ImportError before the gateway can even start.
+    Hermes 的顶层模块名称比较通用（如 ``utils``、``proxy``、``ui``）。
+    Python 默认会在 ``sys.path`` 第一个位置插入当前工作目录，
+    这意味着如果用户从包含自己的 ``utils/`` 的项目目录中启动，
+    ``from utils import ...`` 会解析到用户的包而导致 ImportError。
 
-    The current directory reaches ``sys.path`` two ways, and a complete guard
-    has to handle both:
+    完整的保护需要处理两种情况：
 
-      - As the empty string ``""`` (or ``"."``) that Python inserts at
-        ``sys.path[0]`` for ``-m`` / script launches.
-      - As its own *absolute* path, when a venv activation or a project that
-        adds itself to ``PYTHONPATH`` puts the directory there explicitly.
+    1. 当前目录以空字符串 ``""`` 或 ``"."`` 出现在 ``sys.path[0]``
+       — 这是 Python 在 ``-m`` 或直接运行脚本时插入的形式。
+    2. 当前目录的绝对路径被显式放入 ``sys.path``
+       — 例如通过 venv 激活或 ``PYTHONPATH`` 设置。
 
-    We drop the relative forms outright, then force the real Hermes source root
-    to the front — relocating it ahead of any absolute cwd entry rather than
-    only inserting when absent, so an absolute cwd path can't keep winning.
+    本函数会：
+    - 删除 ``sys.path`` 中的相对形式（"" 和 "." ）
+    - 将 Hermes 源码根目录移到 ``sys.path`` 最前端
+    - 确保绝对路径形式的 cwd 不会覆盖 Hermes 模块
 
-    ``src_root`` defaults to the directory this module lives in, which is the
-    repository root for every shipped entry point, so the guard is
-    self-sufficient and does not depend on the spawner exporting an env var.
+    Args:
+        src_root: Hermes 源码根目录路径。默认为本模块所在目录
+                 （即仓库根目录）。可通过 HERMES_PYTHON_SRC_ROOT
+                 环境变量覆盖。
     """
+    # 确定 Hermes 源码根目录的优先顺序：
+    # 1. 传入参数
+    # 2. HERMES_PYTHON_SRC_ROOT 环境变量
+    # 3. 本模块所在目录（通常就是仓库根目录）
     root = src_root or os.environ.get("HERMES_PYTHON_SRC_ROOT") or os.path.dirname(
         os.path.abspath(__file__)
     )
 
+    # 删除 sys.path 中的相对形式（空字符串 "" 和 "."）
+    # 这是 Python 在启动时插入的当前工作目录，可能导致模块覆盖
     sys.path[:] = [p for p in sys.path if p not in ("", ".")]
 
+    # 将 Hermes 源码根目录转换为绝对路径
     root_abs = os.path.abspath(root)
+    # 先移除可能已存在的绝对路径，避免重复
     sys.path[:] = [p for p in sys.path if os.path.abspath(p) != root_abs]
+    # 将 Hermes 源码根目录插入到 sys.path 最前端
+    # 确保 Hermes 模块优先被解析
     sys.path.insert(0, root)
 
 
 def activate_durable_lazy_target() -> None:
-    """Put the durable lazy-install dir on ``sys.path`` if one is configured.
+    """如果配置了持久化懒加载目录，则将其添加到 ``sys.path``。
 
-    On immutable Docker images the agent venv is sealed and lazy installs
-    are redirected to a writable dir on the data volume
-    (``HERMES_LAZY_INSTALL_TARGET``, e.g. ``/opt/data/lazy-packages``).
-    Packages installed there on a previous run must be importable on this
-    run, so we activate the dir here — at the very first import, before any
-    backend module imports its SDK.
+    在不可变的 Docker 镜像中，Agent 的虚拟环境是封闭的，
+    懒加载的包被重定向到数据卷上的可写目录
+    （由 ``HERMES_LAZY_INSTALL_TARGET`` 环境变量指定，
+    例如 ``/opt/data/lazy-packages``）。
 
-    The activation appends to the END of ``sys.path`` so the core venv
-    always wins name collisions (see ``tools.lazy_deps`` for the full
-    security rationale). Never raises; a missing/empty target is a no-op.
+    在之前运行中安装到该目录的包在当前运行中必须可导入，
+    所以我们在第一次导入时就激活该目录，在任何后端模块
+    导入其 SDK 之前。
+
+    激活操作会将目录追加到 ``sys.path`` 的**末尾**，
+    这样核心 venv 中的包始终优先（避免名称冲突）。
+    具体安全原理参见 ``tools.lazy_deps`` 模块。
+
+    注意：本函数不会抛出异常。如果目录不存在或为空，则什么也不做。
     """
+    # 检查 HERMES_LAZY_INSTALL_TARGET 环境变量是否已设置且非空
     if not os.environ.get("HERMES_LAZY_INSTALL_TARGET", "").strip():
         return
     try:
+        # 动态导入 lazy_deps 模块，避在 bootstrap 阶段引入过多依赖
         from tools import lazy_deps
+        # 调用 lazy_deps 中的激活函数
         lazy_deps.activate_durable_lazy_target()
     except Exception:
-        # Bootstrap must never crash an entry point. If activation fails the
-        # backend simply reports itself unavailable, exactly as before.
+        # Bootstrap 必须永远不要崩溃。
+        # 如果激活失败，后端模块会报告其不可用，
+        # 这与之前的行为一致。
         pass
 
 
-# Apply on import — entry points just need ``import hermes_bootstrap``
-# (or ``from hermes_bootstrap import apply_windows_utf8_bootstrap``) at
-# the very top of their module, before importing anything else.  The
-# import side effect does the right thing.
+# ============================================================================
+# 模块导入时自动执行
+# ============================================================================
+# 所有入口点只需要在模块最顶部写 ``import hermes_bootstrap``
+# 或 ``from hermes_bootstrap import apply_windows_utf8_bootstrap``
+# 就可以触发以下导入副作用。无需显式调用。
+
+# 1. 应用 Windows UTF-8 引导（在 Windows 上修复编码问题，在 POSIX 上无操作）
 apply_windows_utf8_bootstrap()
 
-# Activate the durable lazy-install target (immutable Docker images) so
-# packages installed into the data volume on a previous run are importable
-# this run, before any backend module imports its SDK. No-op when unset.
+# 2. 激活持久化懒加载目标（用于不可变 Docker 镜像）
+#    让之前运行安装的包在当前运行中可导入。
+#    未设置 HERMES_LAZY_INSTALL_TARGET 时为空操作。
 activate_durable_lazy_target()

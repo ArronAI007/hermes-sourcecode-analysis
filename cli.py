@@ -1,4 +1,32 @@
 #!/usr/bin/env python3
+# =============================================================================
+# cli.py - Hermes Agent CLI / TUI 终端界面
+# =============================================================================
+#
+# 本模块提供 Hermes Agent 的交互式命令行界面，灵感来自 Claude Code。
+# 特点包括 ASCII 艺术品牌形象、交互式 REPL、工具集选择、丰富格式化。
+#
+# 使用方式：
+#     python cli.py                          # 启动交互式模式，加载所有工具
+#     python cli.py --toolsets web,terminal  # 启动时只加载指定工具集
+#     python cli.py --skills hermes-agent-dev,github-auth  # 加载技能
+#     python cli.py --list-tools             # 列出可用工具并退出
+#
+# 架构调用关系：
+#     用户输入 $ hermes
+#         → hermes (脚本) → python cli.py
+#             → cli.py:main()
+#                 → 加载配置 (hermes_cli/config.py)
+#                 → 初始化 AIAgent (run_agent.py)
+#                 → 启动 REPL 循环 (prompt_toolkit)
+#                     → 用户输入 → AIAgent.run_conversation()
+#
+# 主要依赖：
+#     - prompt_toolkit: TUI 界面实现
+#     - run_agent.py: AIAgent 核心类
+#     - hermes_cli/: 配置、认证、命令处理
+# =============================================================================
+
 """
 Hermes Agent CLI - Interactive Terminal Interface
 
@@ -12,15 +40,18 @@ Usage:
     python cli.py --list-tools             # List available tools and exit
 """
 
-# IMPORTANT: hermes_bootstrap must be the very first import — UTF-8 stdio
-# on Windows.  No-op on POSIX.  See hermes_bootstrap.py for full rationale.
+# ============================================================================
+# 第一步：导入引导模块
+# ============================================================================
+# hermes_bootstrap 必须是第一个导入的模块，用于：
+# 1. Windows 上修复 UTF-8 编码问题（重配置 stdout/stderr）
+# 2. 保护模块导入路径，防止当前目录同名包覆盖
+# 3. 在 Docker 等不可变环境中激活懒加载目录
 try:
     import hermes_bootstrap  # noqa: F401
 except ModuleNotFoundError:
-    # Graceful fallback when hermes_bootstrap isn't registered in the venv
-    # yet — happens during partial ``hermes update`` where git-reset landed
-    # new code but ``uv pip install -e .`` didn't finish.  Missing bootstrap
-    # means UTF-8 stdio setup is skipped on Windows; POSIX is unaffected.
+    # 当 hermes_bootstrap 尚未注册到 venv 时的优雅回退。
+    # 通常发生在部分 ``hermes update`` 过程中。
     pass
 
 import logging
@@ -3656,43 +3687,57 @@ def save_config_value(key_path: str, value: any) -> bool:
 # HermesCLI Class
 # ============================================================================
 
+# =============================================================================
+# HermesCLI - 交互式命令行界面主类
+# =============================================================================
+# 这是 Hermes Agent 的 CLI/TUI 核心类，通过继承两个 Mixin 获得功能：
+# - CLIAgentSetupMixin: Agent 初始化和配置
+# - CLICommandsMixin: CLI 命令处理
+#
+# 职责：
+# 1. 管理终端输出（通过 Rich Console）
+# 2. 维护 REPL 循环（通过 prompt_toolkit）
+# 3. 处理用户输入并调用 AIAgent
+# 4. 显示工具执行进度和结果
+# 5. 管理会话历史和状态
+# =============================================================================
 class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin):
     """
-    Interactive CLI for the Hermes Agent.
-    
-    Provides a REPL interface with rich formatting, command history,
-    and tool execution capabilities.
+    Hermes Agent 的交互式命令行界面。
+
+    提供带有丰富格式化、命令历史和工具执行能力的 REPL 界面。
+    通过 prompt_toolkit 实现固定输入区域和多行编辑。
     """
-    
+
     def __init__(
         self,
-        model: str = None,
-        toolsets: List[str] = None,
-        provider: str = None,
-        api_key: str = None,
-        base_url: str = None,
-        max_turns: int = None,
-        verbose: Optional[bool] = None,
-        compact: bool = False,
-        resume: str = None,
-        checkpoints: bool = False,
-        pass_session_id: bool = False,
-        ignore_rules: bool = False,
+        model: str = None,              # 使用的 AI 模型（默认从环境变量或 claude-sonnet 获取）
+        toolsets: List[str] = None,     # 启用的工具集列表（默认全部启用）
+        provider: str = None,           # 推理提供商（"auto", "openrouter", "nous", "openai-codex" 等）
+        api_key: str = None,            # API 密钥（默认从环境变量获取）
+        base_url: str = None,           # API 基础 URL（默认 OpenRouter）
+        max_turns: int = None,          # 最大工具调用迭代次数（默认90，与子Agent共享）
+        verbose: Optional[bool] = None, # 是否启用详细日志
+        compact: bool = False,          # 是否使用紧凑显示模式
+        resume: str = None,             # 要恢复的会话 ID（从 SQLite 恢复对话历史）
+        checkpoints: bool = False,      # 是否启用检查点
+        pass_session_id: bool = False,  # 是否在系统提示中包含会话 ID
+        ignore_rules: bool = False,     # 是否忽略规则文件
     ):
         """
-        Initialize the Hermes CLI.
+        初始化 Hermes CLI。
 
         Args:
-            model: Model to use (default: from env or claude-sonnet)
-            toolsets: List of toolsets to enable (default: all)
-            provider: Inference provider ("auto", "openrouter", "nous", "openai-codex", "zai", "kimi-coding", "minimax", "minimax-cn")
-            api_key: API key (default: from environment)
-            base_url: API base URL (default: OpenRouter)
-            max_turns: Maximum tool-calling iterations shared with subagents (default: 90)
-            verbose: Enable verbose logging
-            compact: Use compact display mode
-            resume: Session ID to resume (restores conversation history from SQLite)
-            pass_session_id: Include the session ID in the agent's system prompt
+            model: 使用的模型（默认从环境变量或 claude-sonnet）
+            toolsets: 启用的工具集列表（默认全部）
+            provider: 推理提供商（"auto", "openrouter", "nous", "openai-codex", "zai", "kimi-coding", "minimax", "minimax-cn"）
+            api_key: API 密钥（默认从环境变量获取）
+            base_url: API 基础 URL（默认 OpenRouter）
+            max_turns: 最大工具调用迭代次数（默认90，与子Agent共享）
+            verbose: 是否启用详细日志
+            compact: 使用紧凑显示模式
+            resume: 要恢复的会话 ID（从 SQLite 恢复对话历史）
+            pass_session_id: 在系统提示中包含会话 ID
         """
         # Initialize Rich console
         self.console = Console()

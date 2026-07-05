@@ -1,4 +1,34 @@
 #!/usr/bin/env python3
+# =============================================================================
+# run_agent.py - Hermes Agent 核心编排器
+# =============================================================================
+#
+# 本模块是 Hermes Agent 的核心，提供 AIAgent 类来执行具有工具调用能力的 AI 模型。
+# 它处理对话循环、工具执行、错误恢复和消息历史管理。
+#
+# 主要特性：
+# - 自动工具调用循环，直到任务完成
+# - 可配置的模型参数（温度、top_p 等）
+# - 全面的错误处理和故障转移机制
+# - 消息历史管理（包含上下文压缩）
+# - 支持多种 LLM 提供商（Anthropic、OpenAI、Bedrock、Gemini 等）
+#
+# 典型使用方式：
+#     from run_agent import AIAgent
+#     agent = AIAgent(base_url="http://localhost:30000/v1", model="claude-opus-4-20250514")
+#     response = agent.run_conversation("请告诉我最新的 Python 更新")
+#
+# 调用关系：
+#     cli.py → AIAgent()
+#     gateway/run.py → AIAgent()
+#     batch_runner.py → AIAgent()
+#
+# 依赖：
+#     - hermes_bootstrap.py (必须第一个导入)
+#     - model_tools.py (工具定义和调度)
+#     - agent/ 包 (对话循环、压缩、记忆等)
+# =============================================================================
+
 """
 AI Agent Runner with Tool Calling
 
@@ -15,20 +45,27 @@ Features:
 
 Usage:
     from run_agent import AIAgent
-    
+
     agent = AIAgent(base_url="http://localhost:30000/v1", model="claude-opus-4-20250514")
     response = agent.run_conversation("Tell me about the latest Python updates")
 """
 
-# IMPORTANT: hermes_bootstrap must be the very first import — UTF-8 stdio
-# on Windows.  No-op on POSIX.  See hermes_bootstrap.py for full rationale.
+# ============================================================================
+# 第一步：导入引导模块
+# ============================================================================
+# hermes_bootstrap 必须是第一个导入的模块，用于：
+# 1. Windows 上修复 UTF-8 编码问题（重配置 stdout/stderr）
+# 2. 保护模块导入路径，防止当前目录同名包覆盖
+# 3. 在 Docker 等不可变环境中激活懒加载目录
+#
+# 在 POSIX 系统上为空操作，在 Windows 上会重新配置输入/输出编码。
 try:
     import hermes_bootstrap  # noqa: F401
 except ModuleNotFoundError:
-    # Graceful fallback when hermes_bootstrap isn't registered in the venv
-    # yet — happens during partial ``hermes update`` where git-reset landed
-    # new code but ``uv pip install -e .`` didn't finish.  Missing bootstrap
-    # means UTF-8 stdio setup is skipped on Windows; POSIX is unaffected.
+    # 当 hermes_bootstrap 尚未注册到 venv 时的优雅回退。
+    # 通常发生在部分 ``hermes update`` 过程中：
+    # git-reset 已更新代码，但 ``uv pip install -e .`` 尚未完成。
+    # 缺少 bootstrap 意味着 Windows 上跳过 UTF-8 配置；POSIX 不受影响。
     pass
 
 import asyncio
@@ -400,12 +437,32 @@ class _StreamErrorEvent(Exception):
         }
 
 
+# =============================================================================
+# AIAgent - 核心 Agent 类
+# =============================================================================
+# 这是 Hermes Agent 的核心类，负责：
+# 1. 管理与 LLM 的对话流（消息发送、流式响应处理）
+# 2. 工具调用的编排与执行（解析 LLM 的工具调用请求、调度到对应工具、返回结果）
+# 3. 错误处理与故障转移（API 失败、模型不可用等）
+# 4. 状态管理（会话 ID、用户信息、配额跟踪）
+#
+# 调用关系：
+#   cli.py → AIAgent() → run_conversation() → conversation_loop.py
+#   gateway/run.py → AIAgent() → run_conversation() → conversation_loop.py
+#   batch_runner.py → AIAgent() → run_conversation()
+#
+# 关键设计点：
+#   - 支持多种 LLM 提供商（通过适配器模式）
+#   - 可配置的工具集（启用/禁用特定工具）
+#   - 异步/同步执行支持
+#   - 声明式的审批流程
+# =============================================================================
 class AIAgent:
     """
-    AI Agent with tool calling capabilities.
+    支持工具调用的 AI Agent。
 
-    This class manages the conversation flow, tool execution, and response handling
-    for AI models that support function calling.
+    本类管理对话流程、工具执行和响应处理，
+    支持功能调用式模型。
     """
 
     _TOOL_CALL_ARGUMENTS_CORRUPTION_MARKER = (
@@ -425,78 +482,88 @@ class AIAgent:
 
     def __init__(
         self,
-        base_url: str = None,
-        api_key: str = None,
-        provider: str = None,
-        api_mode: str = None,
-        acp_command: str = None,
-        acp_args: list[str] | None = None,
-        command: str = None,
-        args: list[str] | None = None,
-        model: str = "",
-        max_iterations: int = 90,  # Default tool-calling iterations (shared with subagents)
-        tool_delay: float = 1.0,
-        enabled_toolsets: List[str] = None,
-        disabled_toolsets: List[str] = None,
-        save_trajectories: bool = False,
-        verbose_logging: bool = False,
-        quiet_mode: bool = False,
-        tool_progress_mode: str = "all",
-        ephemeral_system_prompt: str = None,
-        log_prefix_chars: int = 100,
-        log_prefix: str = "",
-        providers_allowed: List[str] = None,
-        providers_ignored: List[str] = None,
-        providers_order: List[str] = None,
-        provider_sort: str = None,
-        provider_require_parameters: bool = False,
-        provider_data_collection: str = None,
-        openrouter_min_coding_score: Optional[float] = None,
-        session_id: str = None,
-        tool_progress_callback: callable = None,
-        tool_start_callback: callable = None,
-        tool_complete_callback: callable = None,
-        thinking_callback: callable = None,
-        reasoning_callback: callable = None,
-        clarify_callback: callable = None,
-        read_terminal_callback: callable = None,
-        step_callback: callable = None,
-        stream_delta_callback: callable = None,
-        interim_assistant_callback: callable = None,
-        tool_gen_callback: callable = None,
-        status_callback: callable = None,
-        notice_callback: callable = None,
-        notice_clear_callback: callable = None,
-        event_callback: Optional[Callable[[str, dict], None]] = None,
-        max_tokens: int = None,
-        reasoning_config: Dict[str, Any] = None,
-        service_tier: str = None,
-        request_overrides: Dict[str, Any] = None,
-        prefill_messages: List[Dict[str, Any]] = None,
-        platform: str = None,
-        user_id: str = None,
-        user_id_alt: str = None,
-        user_name: str = None,
-        chat_id: str = None,
-        chat_name: str = None,
-        chat_type: str = None,
-        thread_id: str = None,
-        gateway_session_key: str = None,
-        skip_context_files: bool = False,
-        load_soul_identity: bool = False,
-        skip_memory: bool = False,
-        session_db=None,
-        parent_session_id: str = None,
-        iteration_budget: "IterationBudget" = None,
-        fallback_model: Dict[str, Any] = None,
-        credential_pool=None,
-        checkpoints_enabled: bool = False,
-        checkpoint_max_snapshots: int = 20,
-        checkpoint_max_total_size_mb: int = 500,
-        checkpoint_max_file_size_mb: int = 10,
-        pass_session_id: bool = False,
+        base_url: str = None,          # LLM API 基础 URL，如 "https://api.openai.com/v1"
+        api_key: str = None,           # API 密钥，用于认证
+        provider: str = None,          # 提供商名称（如 "anthropic"、"openai"、"bedrock"）
+        api_mode: str = None,          # API 调用模式（如 "chat_completions"、"responses"）
+        acp_command: str = None,       # ACP 命令（用于远程工具调用）
+        acp_args: list[str] | None = None,  # ACP 命令参数
+        command: str = None,           # 默认执行命令
+        args: list[str] | None = None, # 默认命令参数
+        model: str = "",               # 使用的模型名称（如 "claude-opus-4-20250514"）
+        max_iterations: int = 90,      # 默认工具调用迭代次数上限（与子 Agent 共享）
+        tool_delay: float = 1.0,       # 工具调用间的延迟（秒），避免频繁调用
+        enabled_toolsets: List[str] = None,    # 启用的工具集列表
+        disabled_toolsets: List[str] = None,   # 禁用的工具集列表
+        save_trajectories: bool = False,        # 是否保存对话轨迹
+        verbose_logging: bool = False,          # 是否启用详细日志
+        quiet_mode: bool = False,               # 是否静音模式（减少输出）
+        tool_progress_mode: str = "all",        # 工具进度显示模式（"all"/部分）
+        ephemeral_system_prompt: str = None,    # 临时系统提示（仅当次对话有效）
+        log_prefix_chars: int = 100,            # 日志前缀字符数
+        log_prefix: str = "",                   # 日志前缀
+        providers_allowed: List[str] = None,    # 允许的提供商列表
+        providers_ignored: List[str] = None,    # 忽略的提供商列表
+        providers_order: List[str] = None,      # 提供商优先级排序
+        provider_sort: str = None,              # 提供商排序策略
+        provider_require_parameters: bool = False,  # 是否要求提供商必须有参数
+        provider_data_collection: str = None,   # 数据收集策略
+        openrouter_min_coding_score: Optional[float] = None,  # OpenRouter 最小编码评分
+        session_id: str = None,                 # 会话 ID（唯一标识）
+        # ---- 回调函数（用于界面更新和状态通知）----
+        tool_progress_callback: callable = None,    # 工具执行进度回调
+        tool_start_callback: callable = None,       # 工具开始执行回调
+        tool_complete_callback: callable = None,    # 工具执行完成回调
+        thinking_callback: callable = None,         # 思考过程回调
+        reasoning_callback: callable = None,        # 推理过程回调
+        clarify_callback: callable = None,          # 需要清晰化时回调
+        read_terminal_callback: callable = None,    # 读取终端输出回调
+        step_callback: callable = None,             # 每步回调
+        stream_delta_callback: callable = None,     # 流式输出增量回调
+        interim_assistant_callback: callable = None, # 中间结果回调
+        tool_gen_callback: callable = None,         # 工具生成回调
+        status_callback: callable = None,           # 状态更新回调
+        notice_callback: callable = None,           # 通知显示回调
+        notice_clear_callback: callable = None,     # 通知清除回调
+        event_callback: Optional[Callable[[str, dict], None]] = None,  # 事件回调
+        # ---- 模型配置 ----
+        max_tokens: int = None,                    # 最大生成 token 数
+        reasoning_config: Dict[str, Any] = None,   # 推理配置（如 effort 级别）
+        service_tier: str = None,                  # 服务等级
+        request_overrides: Dict[str, Any] = None,  # 请求参数覆盖
+        prefill_messages: List[Dict[str, Any]] = None,  # 预填消息
+        # ---- 用户和会话信息 ----
+        platform: str = None,                      # 平台标识（"cli"、"telegram" 等）
+        user_id: str = None,                       # 用户 ID
+        user_id_alt: str = None,                   # 备用用户 ID
+        user_name: str = None,                     # 用户名称
+        chat_id: str = None,                       # 聊天 ID
+        chat_name: str = None,                     # 聊天名称
+        chat_type: str = None,                     # 聊天类型
+        thread_id: str = None,                     # 消息线程 ID
+        gateway_session_key: str = None,            # 网关会话键
+        skip_context_files: bool = False,           # 是否跳过上下文文件
+        load_soul_identity: bool = False,           # 是否加载灵魂身份
+        skip_memory: bool = False,                  # 是否跳过记忆加载
+        session_db=None,                            # 会话数据库引用
+        parent_session_id: str = None,              # 父会话 ID（用于子 Agent）
+        iteration_budget: "IterationBudget" = None, # 迭代次数预算
+        fallback_model: Dict[str, Any] = None,      # 故障转移模型配置
+        credential_pool=None,                       # 凭证池引用
+        # ---- 检查点配置 ----
+        checkpoints_enabled: bool = False,          # 是否启用检查点
+        checkpoint_max_snapshots: int = 20,         # 检查点最大快照数
+        checkpoint_max_total_size_mb: int = 500,    # 检查点总大小限制（MB）
+        checkpoint_max_file_size_mb: int = 10,      # 单个文件大小限制（MB）
+        pass_session_id: bool = False,              # 是否传递会话 ID
     ):
-        """Forwarder — see ``agent.agent_init.init_agent``."""
+        """
+        AIAgent 初始化。
+
+        注意：本方法不直接执行初始化逻辑，而是将所有参数转发给
+        ``agent.agent_init.init_agent`` 函数。这种设计使得初始化逻辑
+        可以在多个入口点间共享，同时保持 AIAgent 类的简洁。
+        """
         from agent.agent_init import init_agent
         init_agent(
             self,
@@ -5710,16 +5777,35 @@ class AIAgent:
 
     def run_conversation(
         self,
-        user_message: str,
-        system_message: str = None,
-        conversation_history: List[Dict[str, Any]] = None,
-        task_id: str = None,
-        stream_callback: Optional[callable] = None,
-        persist_user_message: Optional[str] = None,
-        persist_user_timestamp: Optional[float] = None,
-        moa_config: Optional[dict[str, Any]] = None,
+        user_message: str,                           # 用户消息内容
+        system_message: str = None,                  # 系统消息（覆盖默认提示）
+        conversation_history: List[Dict[str, Any]] = None,  # 对话历史（用于多轮对话）
+        task_id: str = None,                         # 任务 ID（用于追踪和审批）
+        stream_callback: Optional[callable] = None,  # 流式输出回调
+        persist_user_message: Optional[str] = None,  # 持久化的用户消息
+        persist_user_timestamp: Optional[float] = None,  # 用户消息时间戳
+        moa_config: Optional[dict[str, Any]] = None, # Mixture of Agents 配置
     ) -> Dict[str, Any]:
-        """Forwarder — see ``agent.conversation_loop.run_conversation``."""
+        """
+        执行一轮完整的对话。
+
+        这是 AIAgent 的核心方法，负责：
+        1. 构建消息历史（包含系统提示、记忆、上下文文件）
+        2. 调用 LLM API 获取响应
+        3. 处理工具调用（如果有）
+        4. 返回最终结果
+
+        实际对话循环逻辑在 ``agent.conversation_loop.run_conversation`` 中实现。
+        本方法是一个转发器，将所有参数传递给实际实现。
+
+        返回值字典包含：
+            - "final_response": 最终文本响应
+            - "messages": 完整的消息历史
+            - "usage": token 使用统计
+            - "task_id": 任务 ID
+        """
+        # 将对话循环逻辑委托给 agent/conversation_loop.py
+        # 这种设计避免将所有逻辑放在单个文件中
         from agent.conversation_loop import run_conversation
         return run_conversation(
             self,

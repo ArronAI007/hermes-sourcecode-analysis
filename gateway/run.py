@@ -1,3 +1,38 @@
+# =============================================================================
+# gateway/run.py - Hermes Agent 消息网关入口
+# =============================================================================
+#
+# 本模块是 Hermes Agent 的消息网关核心，负责连接各种消息平台：
+# Telegram、Discord、Slack、WhatsApp、Signal 等。
+#
+# 提供的主要功能：
+# - start_gateway(): 启动所有已配置的平台适配器
+# - GatewayRunner: 管理网关生命周期的主类
+#
+# 使用方式：
+#     # 方式一：直接运行
+#     python -m gateway.run
+#
+#     # 方式二：通过 CLI 启动
+#     python cli.py --gateway
+#
+# 架构调用关系：
+#     平台消息收到（Telegram/Discord/Slack... 的 Webhook 或长轮询）
+#         → gateway/platforms/<platform>.py 接收
+#             → GatewayRunner 处理
+#                 → 查找/创建 Session（session.py）
+#                 → 获取 AIAgent（缓存或新建）
+#                 → 调用 AIAgent.run_conversation()
+#                 → 返回响应
+#                     → gateway/delivery.py 投送到平台
+#
+# 关键设计点：
+#   - 每个会话缓存一个 AIAgent 实例（LRU + TTL淘汰）
+#   - 支持多平台并行运行
+#   - 自动重启和健康检查
+#   - 消息投送队列保证可靠性
+# =============================================================================
+
 """
 Gateway runner - entry point for messaging platform integrations.
 
@@ -8,20 +43,22 @@ This module provides:
 Usage:
     # Start the gateway
     python -m gateway.run
-    
+
     # Or from CLI
     python cli.py --gateway
 """
 
-# IMPORTANT: hermes_bootstrap must be the very first import — UTF-8 stdio
-# on Windows.  No-op on POSIX.  See hermes_bootstrap.py for full rationale.
+# ============================================================================
+# 第一步：导入引导模块
+# ============================================================================
+# hermes_bootstrap 必须是第一个导入的模块，用于：
+# 1. Windows 上修复 UTF-8 编码问题（重配置 stdout/stderr）
+# 2. 保护模块导入路径，防止当前目录同名包覆盖
+# 3. 在 Docker 等不可变环境中激活懒加载目录
 try:
     import hermes_bootstrap  # noqa: F401
 except ModuleNotFoundError:
-    # Graceful fallback when hermes_bootstrap isn't registered in the venv
-    # yet — happens during partial ``hermes update`` where git-reset landed
-    # new code but ``uv pip install -e .`` didn't finish.  Missing bootstrap
-    # means UTF-8 stdio setup is skipped on Windows; POSIX is unaffected.
+    # 当 hermes_bootstrap 尚未注册到 venv 时的优雅回退。
     pass
 
 import asyncio
@@ -2702,74 +2739,120 @@ async def _dispose_unused_adapter(adapter: "BasePlatformAdapter | None") -> None
         )
 
 
+# =============================================================================
+# GatewayRunner - 网关主控制器
+# =============================================================================
+# 这是 Hermes Agent 网关层的核心类，通过多重继承获得安全、看板、命令处理能力。
+#
+# 职责：
+# 1. 管理所有平台适配器的生命周期（启动、停止、重启）
+# 2. 接收平台消息并路由到 AIAgent
+# 3. 管理会话缓存（AIAgent 实例的 LRU + TTL淘汰）
+# 4. 处理铃格命令（/help, /model, /status 等）
+# 5. 监控系统状态并报告异常
+#
+# 调用关系：
+#     启动: python -m gateway.run
+#         → start_gateway()
+#             → GatewayRunner()
+#                 → 加载配置
+#                 → 初始化平台适配器
+#                 → 启动消息投送队列
+#
+#     消息处理: 平台 Webhook
+#         → adapter.on_message()
+#             → GatewayRunner._handle_message()
+#                 → 获取 AIAgent（缓存或新建）
+#                 → AIAgent.run_conversation()
+#                 → 投送响应
+#
+# 平台适配器缓存：
+#   - 默认缓存大小: 128 个 Agent
+#   - 空闲 TTL: 3600 秒（1小时）
+# =============================================================================
 class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, GatewaySlashCommandsMixin):
     """
-    Main gateway controller.
+    网关主控制器。
 
-    Manages the lifecycle of all platform adapters and routes
-    messages to/from the agent.
+    管理所有平台适配器的生命周期，
+    并将消息路由到 Agent 或从 Agent 路由出来。
     """
 
-    # Class-level defaults so partial construction in tests doesn't
-    # blow up on attribute access.
-    _running_agents_ts: Dict[str, float] = {}
-    _busy_input_mode: str = "interrupt"
-    _busy_text_mode: str = "interrupt"
-    _restart_drain_timeout: float = DEFAULT_GATEWAY_RESTART_DRAIN_TIMEOUT
-    _exit_code: Optional[int] = None
-    _draining: bool = False
-    _external_drain_active: bool = False
-    _restart_requested: bool = False
-    _restart_task_started: bool = False
-    _restart_detached: bool = False
-    _restart_via_service: bool = False
-    _detached_restart_helper_started: bool = False
-    _restart_command_source: Optional[SessionSource] = None
-    _stop_task: Optional[asyncio.Task] = None
-    _restart_task: Optional[asyncio.Task] = None
-    _session_model_overrides: Dict[str, Dict[str, str]] = {}
-    _session_reasoning_overrides: Dict[str, Dict[str, Any]] = {}
-    _startup_restore_in_progress: bool = False
+    # ---- 类级默认值 ----
+    # 这些是为了让测试中的部分构造不会因属性访问而崩溃。
+    _running_agents_ts: Dict[str, float] = {}       # 正在运行的 Agent 时间戳
+    _busy_input_mode: str = "interrupt"              # 忙碌时的输入处理模式
+    _busy_text_mode: str = "interrupt"               # 忙碌时的文本处理模式
+    _restart_drain_timeout: float = DEFAULT_GATEWAY_RESTART_DRAIN_TIMEOUT  # 重启排水超时
+    _exit_code: Optional[int] = None                 # 退出码
+    _draining: bool = False                          # 是否正在排水（停止接收新消息）
+    _external_drain_active: bool = False             # 外部排水是否活跃
+    _restart_requested: bool = False                 # 是否请求了重启
+    _restart_task_started: bool = False              # 重启任务是否已启动
+    _restart_detached: bool = False                  # 是否分离重启
+    _restart_via_service: bool = False               # 是否通过服务重启
+    _detached_restart_helper_started: bool = False   # 分离重启助手是否已启动
+    _restart_command_source: Optional[SessionSource] = None  # 重启命令来源
+    _stop_task: Optional[asyncio.Task] = None        # 停止任务
+    _restart_task: Optional[asyncio.Task] = None     # 重启任务
+    _session_model_overrides: Dict[str, Dict[str, str]] = {}    # 会话级模型覆盖
+    _session_reasoning_overrides: Dict[str, Dict[str, Any]] = {}  # 会话级推理覆盖
+    _startup_restore_in_progress: bool = False       # 启动恢复是否进行中
 
     def __init__(self, config: Optional[GatewayConfig] = None):
+        """
+        初始化网关运行时。
+
+        Args:
+            config: 网关配置对象。为 None 时会自动加载配置。
+        """
         global _gateway_runner_ref
+
+        # 加载网关配置（从配置文件或环境变量）
         self.config = config or load_gateway_config()
-        # Mark the process as a profile multiplexer when configured. This flips
-        # agent.secret_scope.get_secret() to fail-closed on any unscoped
-        # credential read, so a missed migration crashes loudly instead of
-        # leaking a cross-profile value (Workstream A). Inert when off.
+
+        # ---- 多配置文件支持 ----
+        # 当启用多配置文件时，标记进程为多路复用器。
+        # 这会导致 agent.secret_scope.get_secret() 在未指定作用域的
+        # 凭证读取时直接失败（而不是泄露跨配置的值）。
+        # 未启用时为空操作。
         try:
             from agent.secret_scope import set_multiplex_active
             set_multiplex_active(bool(getattr(self.config, "multiplex_profiles", False)))
         except Exception:
             logger.debug("could not set multiplex-active flag", exc_info=True)
+
+        # ---- 平台适配器管理 ----
+        # 主适配器字典：Platform → BasePlatformAdapter
         self.adapters: Dict[Platform, BasePlatformAdapter] = {}
-        # Multi-profile multiplexing: adapters for NON-default profiles live
-        # here, keyed by profile name then Platform. self.adapters stays the
-        # default/active profile's map so the ~93 existing self.adapters[...]
-        # sites are untouched when multiplexing is off (this dict is empty).
-        # Populated by _start_secondary_profile_adapters().
+
+        # 多配置文件复用：非默认配置文件的适配器存储在这里，
+        # 以配置文件名称为键，然后是 Platform → Adapter 映射。
+        # 当多路复用关闭时，这个字典为空，不影响现有的 self.adapters 使用。
         self._profile_adapters: Dict[str, Dict[Platform, BasePlatformAdapter]] = {}
+
+        # 检查 Docker 媒体传输配置是否安全
         self._warn_if_docker_media_delivery_is_risky()
+
+        # 注册弱引用，便于其他模块访问当前 GatewayRunner 实例
         _gateway_runner_ref = _weakref.ref(self)
 
-        # Load ephemeral config from config.yaml / env vars.
-        # Both are injected at API-call time only and never persisted.
-        self._prefill_messages = self._load_prefill_messages()
-        self._ephemeral_system_prompt = self._load_ephemeral_system_prompt()
-        self._reasoning_config = self._load_reasoning_config()
-        self._service_tier = self._load_service_tier()
-        self._show_reasoning = self._load_show_reasoning()
-        self._busy_input_mode = self._load_busy_input_mode()
-        self._busy_text_mode = self._load_busy_text_mode()
-        self._restart_drain_timeout = self._load_restart_drain_timeout()
-        self._provider_routing = self._load_provider_routing()
-        self._fallback_model = self._load_fallback_model()
+        # ---- 加载临时配置（仅 API 调用时注入，不保存）----
+        self._prefill_messages = self._load_prefill_messages()           # 预填消息
+        self._ephemeral_system_prompt = self._load_ephemeral_system_prompt()  # 临时系统提示
+        self._reasoning_config = self._load_reasoning_config()           # 推理配置
+        self._service_tier = self._load_service_tier()                   # 服务等级
+        self._show_reasoning = self._load_show_reasoning()               # 是否显示推理过程
+        self._busy_input_mode = self._load_busy_input_mode()             # 忙碌时输入模式
+        self._busy_text_mode = self._load_busy_text_mode()               # 忙碌时文本模式
+        self._restart_drain_timeout = self._load_restart_drain_timeout() # 重启排水超时
+        self._provider_routing = self._load_provider_routing()           # 提供商路由
+        self._fallback_model = self._load_fallback_model()               # 故障转移模型
 
-        # Wire process registry into session store for reset protection.
-        # A background process older than the configured threshold (default 24h,
-        # session_reset.bg_process_max_age_hours) is treated as stale and no
-        # longer blocks session idle / daily reset — see #29177. The process is
+        # ---- 进程注册与会话复位保护 ----
+        # 将进程注册到会话存储中，用于复位保护。
+        # 超过配置阈值（默认24小时，session_reset.bg_process_max_age_hours）
+        # 的后台进程被视为过期，不再阻止会话空闲/每日复位 — 参见 #29177。
         # NOT killed, only ignored by the reset guard.
         from tools.process_registry import process_registry
         _bg_max_age_hours = getattr(
