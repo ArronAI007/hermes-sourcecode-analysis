@@ -1,59 +1,59 @@
-"""Windows UTF-8 bootstrap for Hermes entry points.
+"""Hermes 入口点的 Windows UTF-8 引导模块。
 
-Python on Windows has two long-standing text-encoding footguns:
+Windows 上的 Python 存在两个长期存在的文本编码陷阱：
 
-1. ``sys.stdout`` / ``sys.stderr`` are bound to the console code page
-   (``cp1252`` on US-locale installs), so ``print("café")`` crashes with
-   ``UnicodeEncodeError: 'charmap' codec can't encode character``.
+1. ``sys.stdout`` / ``sys.stderr`` 绑定到控制台的代码页
+   （美国区域设置为 ``cp1252``），因此 ``print("café")`` 会崩溃并抛出
+   ``UnicodeEncodeError: 'charmap' codec can't encode character``。
 
-2. Child processes spawned via ``subprocess`` don't know to use UTF-8
-   unless ``PYTHONUTF8`` and/or ``PYTHONIOENCODING`` are set in their
-   environment — so any Python subprocess (the execute_code sandbox,
-   delegation children, linter subprocesses, etc.) inherits the same
-   cp1252 defaults and hits the same UnicodeEncodeError.
+2. 通过 ``subprocess`` 生成的子进程不会自动使用 UTF-8，
+   除非在它们的环境中设置了 ``PYTHONUTF8`` 和/或 ``PYTHONIOENCODING``
+   —— 因此任何 Python 子进程（execute_code 沙箱、委托子进程、
+   linter 子进程等）都会继承相同的 cp1252 默认值并遇到同样的
+   UnicodeEncodeError。
 
-This module fixes both on Windows *only* — POSIX is untouched.  It
-should be imported at the very top of every Hermes entry point
-(``hermes``, ``hermes-agent``, ``hermes-acp``, ``python -m gateway.run``,
-``batch_runner.py``, ``cron/scheduler.py``) before any other imports
-that might do file I/O or print to stdout.
+本模块仅在 Windows 上修复这两个问题 —— POSIX 系统不受影响。
+它应该在每个 Hermes 入口点的最顶部导入
+（``hermes``、``hermes-agent``、``hermes-acp``、``python -m gateway.run``、
+``batch_runner.py``、``cron/scheduler.py``），在任何可能进行文件 I/O
+或输出到 stdout 的其他导入之前。
 
-What this module does on Windows:
+本模块在 Windows 上的作用：
 
-  - Sets ``os.environ["PYTHONUTF8"] = "1"`` (PEP 540 UTF-8 mode) so
-    every child process we spawn uses UTF-8 for ``open()`` and stdio.
-  - Sets ``os.environ["PYTHONIOENCODING"] = "utf-8"`` for belt-and-
-    suspenders — some tools read this instead of / in addition to
-    ``PYTHONUTF8``.
-  - Reconfigures ``sys.stdout`` / ``sys.stderr`` to UTF-8 in the current
-    process, using the ``reconfigure()`` API (Python 3.7+).  This fixes
-    ``print("café")`` in the parent without a re-exec.
+  - 设置 ``os.environ["PYTHONUTF8"] = "1"``（PEP 540 UTF-8 模式），
+    使我们生成的每个子进程都使用 UTF-8 进行 ``open()`` 和 stdio 操作。
+  - 设置 ``os.environ["PYTHONIOENCODING"] = "utf-8"`` 作为双重保险 ——
+    某些工具读取的是这个变量，而不是或除了 ``PYTHONUTF8`` 之外。
+  - 使用 ``reconfigure()`` API（Python 3.7+）将当前进程中的
+    ``sys.stdout`` / ``sys.stderr`` 重新配置为 UTF-8。
+    这可以在不重启的情况下修复父进程中的 ``print("café")``。
 
-What this module does NOT do:
+本模块不会做的事情：
 
-  - It does not re-exec Python with ``-X utf8``, so ``open()`` calls in
-    the *current* process still default to locale encoding.  Those need
-    an explicit ``encoding="utf-8"`` at the call site (lint rule
-    ``PLW1514`` / ``PYI058``).  Ruff is the right tool for that sweep.
+  - 它不会使用 ``-X utf8`` 重新执行 Python，因此 *当前* 进程中的
+    ``open()`` 调用仍然默认使用区域编码。这些需要在调用点显式指定
+    ``encoding="utf-8"``（lint 规则 ``PLW1514`` / ``PYI058``）。
+    Ruff 是执行此扫描的正确工具。
 
-What this module does on POSIX:
+本模块在 POSIX 上的作用：
 
-  - Nothing.  POSIX systems are already UTF-8 by default in 99% of cases,
-    and we don't want to touch ``LANG``/``LC_*`` behavior that users may
-    have configured intentionally.  If someone hits a C/POSIX locale on
-    Linux, they can export ``PYTHONUTF8=1`` themselves — we won't override.
+  - 什么都不做。POSIX 系统在 99% 的情况下已经默认使用 UTF-8，
+    我们不想触碰用户可能有意配置的 ``LANG``/``LC_*`` 行为。
+    如果有人在 Linux 上遇到 C/POSIX 区域设置，他们可以自行导出
+    ``PYTHONUTF8=1`` —— 我们不会覆盖。
 
-Idempotent: safe to call multiple times.  ``_bootstrap_once`` guards
-against double-reconfigure.
+幂等性：可以安全地多次调用。``_bootstrap_once`` 防止重复重新配置。
 """
 
-from __future__ import annotations  # 启用向未来版本兼容的类型注解（如 list[str] 而非 typing.List[str]）
+from __future__ import (
+    annotations,  # 启用向未来版本兼容的类型注解（如 list[str] 而非 typing.List[str]）
+)
 
-import os    # 操作系统接口，用于设置环境变量、文件路径操作
-import sys   # 系统特定参数和函数，用于调整 Python 运行时的模块搜索路径和标准输入/输出
+import os  # 操作系统接口，用于设置环境变量、文件路径操作
+import sys  # 系统特定参数和函数，用于调整 Python 运行时的模块搜索路径和标准输入/输出
 
 # 检测当前操作系统是否为 Windows（包括 win32 和 cygwin 等变种）
-# 这决实了是否需要应用 Windows 特定的 UTF-8 修复
+# 这决定了是否需要应用 Windows 特定的 UTF-8 修复
 _IS_WINDOWS = sys.platform == "win32"
 
 # 守护标志位，确保 bootstrap 只执行一次（幂等性）
@@ -62,14 +62,13 @@ _bootstrap_applied = False
 
 
 def apply_windows_utf8_bootstrap() -> bool:
-    """Apply the Windows UTF-8 bootstrap if we're on Windows.
+    """如果在 Windows 上运行，则应用 Windows UTF-8 引导。
 
-    Returns True if bootstrap was applied (i.e. we're on Windows and
-    haven't already done this), False otherwise.  The return value is
-    advisory — callers normally don't need it, but tests may want to
-    assert the path was taken.
+    如果引导已应用（即在 Windows 上且尚未执行过）则返回 True，
+    否则返回 False。返回值仅供参考 —— 调用者通常不需要它，
+    但测试可能需要断言该路径已被执行。
 
-    Idempotent: subsequent calls after the first are a no-op.
+    幂等性：首次调用之后的后续调用均为空操作。
     """
     global _bootstrap_applied
 
@@ -78,42 +77,41 @@ def apply_windows_utf8_bootstrap() -> bool:
     if _bootstrap_applied:
         return False
 
-    # 1. Child processes inherit these and run in UTF-8 mode.
-    #    We use setdefault() rather than overwriting so the user can
-    #    explicitly opt out by setting PYTHONUTF8=0 in their environment
-    #    (or PYTHONIOENCODING=something-else) if they really want to.
+    # 1. 子进程继承这些环境变量并以 UTF-8 模式运行。
+    #    我们使用 setdefault() 而非直接覆盖，以便用户可以在其环境中
+    #    显式设置 PYTHONUTF8=0（或 PYTHONIOENCODING=其他值）
+    #    如果他们真的想退出的话。
     os.environ.setdefault("PYTHONUTF8", "1")
     os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
-    # 2. Reconfigure the current process's stdio to UTF-8.  Needed
-    #    because os.environ changes don't retroactively rebind sys.stdout
-    #    — those were bound at interpreter startup based on the console
-    #    code page.  ``reconfigure`` is a TextIOWrapper method since 3.7.
+    # 2. 将当前进程的标准输入/输出重新配置为 UTF-8。
+    #    这是必要的，因为修改 os.environ 不会追溯性地重新绑定
+    #    sys.stdout —— 这些流是在解释器启动时根据控制台代码页绑定的。
+    #    ``reconfigure`` 是自 Python 3.7 起 TextIOWrapper 的方法。
     #
-    #    errors="replace" means that if we ever *read* something from
-    #    stdin that isn't UTF-8 (unlikely but possible with piped input
-    #    from legacy tools), we'll get U+FFFD replacement chars rather
-    #    than a crash.  Output is pure UTF-8.
+    #    errors="replace" 意味着如果我们从 stdin *读取*到非 UTF-8 的内容
+    #    （不太可能，但使用来自旧工具的管道输入时可能发生），
+    #    我们会得到 U+FFFD 替换字符而不是崩溃。输出是纯 UTF-8。
     for stream_name in ("stdout", "stderr"):
         stream = getattr(sys, stream_name, None)
         if stream is None:
             continue
         reconfigure = getattr(stream, "reconfigure", None)
         if reconfigure is None:
-            # Not a TextIOWrapper (could be redirected to a BytesIO in
-            # tests, or a non-standard stream in some embedded cases).
-            # Skip silently — the env-var fix is still in effect for
-            # child processes, which is the bigger win.
+            # 不是 TextIOWrapper（在测试中可能重定向到 BytesIO，
+            # 或在某些嵌入式情况下为非标准流）。
+            # 静默跳过 —— 环境变量修复仍然对子进程生效，
+            # 而这才是更重要的收益。
             continue
         try:
             reconfigure(encoding="utf-8", errors="replace")
         except (OSError, ValueError):
-            # Already closed, or someone replaced it with something
-            # non-reconfigurable.  Non-fatal.
+            # 已关闭，或被替换为不可重新配置的对象。
+            # 非致命错误。
             pass
 
-    # stdin is reconfigured separately with errors="replace" too — input
-    # from a legacy pipe shouldn't crash the process.
+    # stdin 也单独使用 errors="replace" 重新配置 ——
+    # 来自旧管道的输入不应导致进程崩溃。
     stdin = getattr(sys, "stdin", None)
     if stdin is not None:
         reconfigure = getattr(stdin, "reconfigure", None)
@@ -156,8 +154,10 @@ def harden_import_path(src_root: str | None = None) -> None:
     # 1. 传入参数
     # 2. HERMES_PYTHON_SRC_ROOT 环境变量
     # 3. 本模块所在目录（通常就是仓库根目录）
-    root = src_root or os.environ.get("HERMES_PYTHON_SRC_ROOT") or os.path.dirname(
-        os.path.abspath(__file__)
+    root = (
+        src_root
+        or os.environ.get("HERMES_PYTHON_SRC_ROOT")
+        or os.path.dirname(os.path.abspath(__file__))
     )
 
     # 删除 sys.path 中的相对形式（空字符串 "" 和 "."）
@@ -195,8 +195,9 @@ def activate_durable_lazy_target() -> None:
     if not os.environ.get("HERMES_LAZY_INSTALL_TARGET", "").strip():
         return
     try:
-        # 动态导入 lazy_deps 模块，避在 bootstrap 阶段引入过多依赖
+        # 动态导入 lazy_deps 模块，避免在 bootstrap 阶段引入过多依赖
         from tools import lazy_deps
+
         # 调用 lazy_deps 中的激活函数
         lazy_deps.activate_durable_lazy_target()
     except Exception:
