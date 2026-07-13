@@ -1,3 +1,19 @@
+# =============================================================================
+# hermes_cli/callbacks.py - 终端交互回调
+# =============================================================================
+#
+# 本模块桥接 terminal_tool 的交互提示到 prompt_toolkit 事件循环。
+#
+# 回调类型：
+#   - clarify_callback: 澄清问题选择
+#   - sudo_password_callback: sudo 密码输入
+#   - approval_callback: 审批确认
+#
+# 线程安全：
+#   - 使用 queue.Queue 跨线程通信
+#   - 阻塞直到用户响应或超时
+# =============================================================================
+
 """Interactive prompt callbacks for terminal_tool integration.
 
 These bridge terminal_tool's interactive prompts (clarify, sudo, approval)

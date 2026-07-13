@@ -1,3 +1,11 @@
+# =============================================================================
+# hermes_cli/completion.py - Shell 补全脚本生成
+# =============================================================================
+#
+# 遍历 argparse 解析器树生成准确的补全脚本，无硬编码子命令列表。
+# 支持 bash, zsh, fish。
+# =============================================================================
+
 """Shell completion script generation for hermes CLI.
 
 Walks the live argparse parser tree to generate accurate, always-up-to-date

@@ -1,3 +1,23 @@
+# =============================================================================
+# hermes_cli/cli_agent_setup_mixin.py - Agent 初始化和会话恢复
+# =============================================================================
+#
+# 本模块包含 Agent 构造和会话恢复显示方法。
+# 从 cli.py 抽取，作为 god-file decomposition 的一部分。
+#
+# 主要职责：
+#   - 运行时凭证解析
+#   - 轮次配置
+#   - 首次使用的 Agent 构造
+#   - 恢复会话的预加载和历史摘要
+#
+# 设计原则：
+#   - 所有方法原样从 HermesCLI 抽取
+#   - self.* 调用通过 MRO 不变解析
+#   - 中立依赖在模块顶层导入
+#   - 内部符号懒导入避免循环
+# =============================================================================
+
 """Agent-construction and session-resume display methods for ``HermesCLI``.
 
 Extracted from ``cli.py`` as part of the god-file decomposition campaign
