@@ -1,12 +1,12 @@
-"""Provider profile base class.
+"""
+提供商配置基类 —— 声明式 LLM 推理后端画像。
 
-A ProviderProfile declares everything about an inference provider in one place:
-auth, endpoints, client quirks, request-time quirks. The transport reads this
-instead of receiving 20+ boolean flags.
+ProviderProfile 将推理提供商的所有信息集中在一处声明：
+认证方式、端点地址、客户端特性、请求级特殊处理。
+传输层直接读取此画像，而非接收 20+ 个布尔标志。
 
-Provider profiles are DECLARATIVE — they describe the provider's behavior.
-They do NOT own client construction, credential rotation, or streaming.
-Those stay on AIAgent.
+提供商配置是**声明式**的 —— 它们描述提供商的行为特征。
+它们**不负责**客户端构造、凭证轮换或流式处理，这些仍由 AIAgent 掌管。
 """
 
 from __future__ import annotations
@@ -29,7 +29,10 @@ def _profile_user_agent() -> str:
     (OpenCode Zen, etc.) sit behind a WAF that returns 403 for that.
     """
     try:
-        from hermes_cli import __version__ as _ver  # lazy: avoid layer cycle at import time
+        from hermes_cli import (
+            __version__ as _ver,  # lazy: avoid layer cycle at import time
+        )
+
         return f"hermes-cli/{_ver}"
     except Exception:
         return "hermes-cli"
@@ -45,16 +48,20 @@ class ProviderProfile:
     aliases: tuple = ()
 
     # ── Human-readable metadata ───────────────────────────────
-    display_name: str = ""       # e.g. "GMI Cloud" — shown in picker/labels
-    description: str = ""        # e.g. "GMI Cloud (multi-model direct API)" — picker subtitle
-    signup_url: str = ""         # e.g. "https://www.gmicloud.ai/" — shown during setup
+    display_name: str = ""  # e.g. "GMI Cloud" — shown in picker/labels
+    description: str = ""  # e.g. "GMI Cloud (multi-model direct API)" — picker subtitle
+    signup_url: str = ""  # e.g. "https://www.gmicloud.ai/" — shown during setup
 
     # ── Auth & endpoints ─────────────────────────────────────
     env_vars: tuple = ()
     base_url: str = ""
     models_url: str = ""  # explicit models endpoint; falls back to {base_url}/models
-    auth_type: str = "api_key"   # api_key|oauth_device_code|oauth_external|copilot|aws_sdk
-    supports_health_check: bool = True  # False → doctor skips /models probe for this provider
+    auth_type: str = (
+        "api_key"  # api_key|oauth_device_code|oauth_external|copilot|aws_sdk
+    )
+    supports_health_check: bool = (
+        True  # False → doctor skips /models probe for this provider
+    )
 
     # ── Vision support ────────────────────────────────────────
     # True when the provider's API accepts image content inside
@@ -105,6 +112,7 @@ class ProviderProfile:
             return self.hostname
         if self.base_url:
             from urllib.parse import urlparse
+
             return urlparse(self.base_url).hostname or ""
         return ""
 

@@ -1,31 +1,27 @@
-"""Provider module registry.
+"""
+模型提供商注册表 —— LLM 推理后端的发现与加载中心。
 
-Provider profiles can live in two places:
+提供商配置可存在于两处：
+1. 捆绑插件：``plugins/model-providers/<name>/``（随 hermes-agent 发布）
+2. 用户插件：``$HERMES_HOME/plugins/model-providers/<name>/``
 
-1. Bundled plugins: ``plugins/model-providers/<name>/`` (shipped with hermes-agent)
-2. User plugins: ``$HERMES_HOME/plugins/model-providers/<name>/``
+每个插件目录包含：
+  - ``__init__.py`` — 在导入时调用 ``register_provider(profile)``
+  - ``plugin.yaml`` — 清单（名称、类型：model-provider、版本、描述）
 
-Each plugin directory contains:
-  - ``__init__.py`` — calls ``register_provider(profile)`` at import
-  - ``plugin.yaml`` — manifest (name, kind: model-provider, version, description)
+发现是延迟的：首次调用 ``get_provider_profile()`` 或 ``list_providers()``
+时才会扫描两个位置并导入所有插件。用户插件在名称冲突时覆盖捆绑插件
+（后写入者获胜），因此第三方无需编辑仓库即可替换任何内置配置。
 
-Discovery is lazy: the first call to ``get_provider_profile()`` or
-``list_providers()`` scans both locations and imports every plugin. User
-plugins override bundled plugins on name collision (last-writer-wins), so
-third parties can monkey-patch or replace any built-in profile without
-editing the repo.
+为保持向后兼容，``providers/*.py`` 文件（除 ``base.py`` 和 ``__init__.py`` 外）
+仍通过 ``pkgutil.iter_modules`` 发现。这让外部用户可直接放置单文件配置
+到可编辑安装中，无需插件目录结构。新配置应优先使用插件布局。
 
-For backward compatibility, ``providers/*.py`` files (other than ``base.py``
-and ``__init__.py``) are still discovered via ``pkgutil.iter_modules``.
-This lets out-of-tree users drop a single-file profile into an editable
-install without the plugin dir structure. New profiles should prefer the
-plugin layout.
-
-Usage::
+使用示例::
 
     from providers import get_provider_profile
-    profile = get_provider_profile("nvidia")   # ProviderProfile or None
-    profile = get_provider_profile("kimi")     # checks name + aliases
+    profile = get_provider_profile("nvidia")   # ProviderProfile 或 None
+    profile = get_provider_profile("kimi")     # 同时检查名称与别名
 """
 
 from __future__ import annotations
