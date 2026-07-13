@@ -12,6 +12,14 @@ Import discipline (mirrors gateway/slash_commands.py, PR #41886):
     loaded, so the mixin module never imports ``cli`` at top level (no cycle).
 """
 
+# =============================================================================
+# CLICommandsMixin - CLI 斜杠命令处理器 Mixin
+# =============================================================================
+# 本模块包含从 cli.py 抽取的斜杠命令处理器。
+# HermesCLI 继承此 Mixin，通过 MRO 保持调度不变。
+# 懒导入避免循环依赖。
+# =============================================================================
+
 from __future__ import annotations
 
 import json
