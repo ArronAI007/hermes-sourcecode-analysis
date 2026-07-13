@@ -1,20 +1,7 @@
-"""Workspace and project-root resolution for LSP.
-
-Two concerns live here:
-
-1. **Workspace gate** — the upper-level "is this directory a project?"
-   check.  Hermes only runs LSP when the cwd (or the file being edited)
-   sits inside a git worktree.  Files outside any git root never
-   trigger LSP, even if a server is configured.  This keeps Telegram
-   gateway users on user-home cwd's from spawning daemons.
-
-2. **NearestRoot** — the per-server project-root walk.  Each language
-   server cares about a different marker (``pyproject.toml`` for
-   Python, ``Cargo.toml`` for Rust, ``go.mod`` for Go, etc.) and
-   wants the directory containing that marker.  ``nearest_root()``
-   walks up from a starting path looking for any of a list of marker
-   files, optionally bailing if an exclude marker shows up first.
 """
+LSP 工作区 —— 文件系统同步与符号索引。
+"""
+
 from __future__ import annotations
 
 import logging

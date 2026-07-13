@@ -1,32 +1,5 @@
-"""Microsoft Entra ID adapter for Microsoft Foundry.
-
-Provides keyless authentication for Microsoft Foundry deployments using the
-`azure-identity` SDK's `DefaultAzureCredential` chain (env service principal
-→ workload identity → managed identity → VS Code → Azure CLI → azd →
-PowerShell → broker).
-
-Architecture mirrors `agent/bedrock_adapter.py`:
-
-* Lazy import. `azure-identity` is only loaded when ``model.auth_mode =
-  entra_id`` is selected. Users who stick with `AZURE_FOUNDRY_API_KEY`
-  never pay the import cost.
-* SDK-callable contract. The public entry point ``build_token_provider``
-  returns a zero-arg callable produced by ``get_bearer_token_provider`` —
-  this is exactly the value Microsoft's documented sample plugs into
-  ``OpenAI(api_key=token_provider, base_url=...)``. The OpenAI SDK calls
-  it before every request, so token refresh is transparent.
-* Three explicit consumer-side helpers (display / cache / http-bearer)
-  rather than one generic "materialize" function — splitting them by
-  purpose prevents accidental token-minting in logging paths or token
-  leakage into cache keys / dashboard JSON.
-* No persisted JWT. ``azure-identity`` caches in-process and (where
-  available) in the OS keychain or ``~/.IdentityService``. Hermes does
-  not duplicate that storage in ``auth.json``.
-
-Reference: https://learn.microsoft.com/azure/ai-foundry/foundry-models/how-to/configure-entra-id
-
-Requires: ``azure-identity`` (optional dependency — only needed when
-``model.auth_mode = entra_id``).
+"""
+Azure 身份适配 —— Microsoft Entra ID OAuth 令牌管理。
 """
 
 from __future__ import annotations

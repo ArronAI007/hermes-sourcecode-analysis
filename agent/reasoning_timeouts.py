@@ -1,53 +1,5 @@
-"""Per-reasoning-model stale-timeout floor for known reasoning models.
-
-Reasoning models (those that emit extended thinking blocks before their
-first content token) routinely exceed Hermes's default chat-model
-stale detectors:
-
-* Stream stale detector:   ``HERMES_STREAM_STALE_TIMEOUT``     default 180s
-                           ``agent/chat_completion_helpers.py:2544``
-* Non-stream stale detector: ``HERMES_API_CALL_STALE_TIMEOUT``  default 90s
-                           ``run_agent.py:1140``
-
-For NVIDIA Nemotron 3 Ultra on the hosted NIM gateway the empirical
-upstream idle kill is ~120s (first-party reproduction at
-NVIDIA/NemoClaw#4846 — TTFB ~31s, stream dies at 120s). The same
-failure mode exists on OpenAI o1/o3, Anthropic Opus 4.x thinking,
-DeepSeek R1, Qwen QwQ, xAI Grok reasoning — every cloud reasoning
-model hits upstream-proxies / load-balancers with idle timeouts
-shorter than the model's thinking phase. Result: the stale detector
-kills the connection mid-think, surfacing as
-``BrokenPipeError``/``RemoteProtocolError`` on the next read.
-
-This module provides a floor that the existing stale-detector scaling
-blocks consult via :func:`get_reasoning_stale_timeout_floor` and
-apply as ``max(default, floor)``. It is a FLOOR:
-
-* Never overrides explicit user config (``providers.<id>.models.<model>.stale_timeout_seconds``
-  or ``request_timeout_seconds`` already wins — this code never runs
-  in that branch).
-* Never lowers an existing threshold.
-* Has zero effect on non-reasoning models — they are not in the
-  allowlist and the resolver returns ``None``.
-
-Matching uses start-anchored regex on the slug-only component of
-the model name (after stripping any aggregator prefix like
-``openai/``, ``x-ai/``, ``anthropic/``).  The right-anchor matches
-end-of-string or a ``-``/``.``/``_`` slug separator, so ``qwen3-235b``
-matches the ``qwen3`` family entry (a future model slug would be
-``qwen3-235b-instruct`` and would also match) but ``some-other-qwen3``
-does NOT match ``qwen3`` (the ``-qwen3`` is not at start of slug).
-
-The ``o1`` case is the most delicate: a model named
-``llama-4-70b-o1-preview`` is a hypothetical community derivative that
-should NOT trigger the reasoning-model floor for the user (the user
-chose a non-OpenAI model, not a reasoning model).  The start-of-slug
-anchor naturally excludes this — the matched ``o1-preview`` is at
-position 11 of the slug, not at position 0.  The previous substring-
-with-trailing-hyphen design would have over-matched here, which is
-why start-of-slug anchoring is the right shape.
-
-Fixes #52217.
+"""
+推理超时 —— 思维链的时长预算与截断。
 """
 
 from __future__ import annotations

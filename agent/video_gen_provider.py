@@ -1,47 +1,5 @@
 """
-Video Generation Provider ABC
-=============================
-
-Defines the pluggable-backend interface for video generation. Providers register
-instances via ``PluginContext.register_video_gen_provider()``; the active one
-(selected via ``video_gen.provider`` in ``config.yaml``) services every
-``video_generate`` tool call.
-
-Providers live in ``<repo>/plugins/video_gen/<name>/`` (built-in, auto-loaded
-as ``kind: backend``) or ``~/.hermes/plugins/video_gen/<name>/`` (user, opt-in
-via ``plugins.enabled``).
-
-Mirrors the ``image_gen`` provider design (``agent/image_gen_provider.py``) so
-the two surfaces stay learnable together.
-
-Unified surface
----------------
-One tool — ``video_generate`` — covers **text-to-video** and **image-to-video**.
-The router is the presence of ``image_url``: if it's set, the provider routes
-to its image-to-video endpoint; if it's omitted, the provider routes to
-text-to-video. Users pick one **model family** (e.g. Pixverse v6, Veo 3.1,
-Kling O3 Standard); the provider handles which underlying FAL/xAI endpoint
-to hit.
-
-Video edit and video extend are intentionally NOT exposed in this surface —
-the inconsistency across backends is too large for one unified tool. If
-those use cases warrant attention later they can ship as separate tools.
-
-Response shape
---------------
-All providers return a dict built by :func:`success_response` /
-:func:`error_response`. Keys:
-
-    success         bool
-    video           str | None      URL or absolute file path
-    model           str             provider-specific model identifier
-    prompt          str             echoed prompt
-    modality        str             "text" | "image" (which mode was used)
-    aspect_ratio    str             provider-native (e.g. "16:9") or ""
-    duration        int             seconds (0 if not applicable)
-    provider        str             provider name (for diagnostics)
-    error           str             only when success=False
-    error_type      str             only when success=False
+视频生成提供商 —— 视频合成模型的抽象接口。
 """
 
 from __future__ import annotations

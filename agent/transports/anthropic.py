@@ -1,7 +1,5 @@
-"""Anthropic Messages API transport.
-
-Delegates to the existing adapter functions in agent/anthropic_adapter.py.
-This transport owns format conversion and normalization — NOT client lifecycle.
+"""
+Anthropic 传输 —— Messages API 的流式实现。
 """
 
 from typing import Any, Dict, List, Optional

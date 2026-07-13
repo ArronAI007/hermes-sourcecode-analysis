@@ -1,17 +1,5 @@
-"""OpenAI-compatible facade over Google AI Studio's native Gemini API.
-
-Hermes keeps ``api_mode='chat_completions'`` for the ``gemini`` provider so the
-main agent loop can keep using its existing OpenAI-shaped message flow.
-This adapter is the transport shim that converts those OpenAI-style
-``messages[]`` / ``tools[]`` requests into Gemini's native
-``models/{model}:generateContent`` schema and converts the responses back.
-
-Why this exists
----------------
-Google's OpenAI-compatible endpoint has been brittle for Hermes's multi-turn
-agent/tool loop (auth churn, tool-call replay quirks, thought-signature
-requirements).  The native Gemini API is the canonical path and avoids the
-OpenAI-compat layer entirely.
+"""
+Gemini 原生适配 —— Google Vertex AI 直接调用。
 """
 
 from __future__ import annotations

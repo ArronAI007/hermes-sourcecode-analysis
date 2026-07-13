@@ -1,13 +1,5 @@
-"""Cross-session rate limit guard for Nous Portal.
-
-Writes rate limit state to a shared file so all sessions (CLI, gateway,
-cron, auxiliary) can check whether Nous Portal is currently rate-limited
-before making requests.  Prevents retry amplification when RPH is tapped.
-
-Each 429 from Nous triggers up to 9 API calls per conversation turn
-(3 SDK retries x 3 Hermes retries), and every one of those calls counts
-against RPH.  By recording the rate limit state on first 429 and checking
-it before subsequent attempts, we eliminate the amplification effect.
+"""
+Nous 速率守卫 —— 平台级速率限制与流量整形。
 """
 
 from __future__ import annotations

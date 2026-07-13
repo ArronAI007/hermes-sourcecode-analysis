@@ -1,14 +1,5 @@
-"""Thin image-generation layer for pet sprites.
-
-Wraps the active :class:`~agent.image_gen_provider.ImageGenProvider` with the
-two things sprite generation needs that the agent-facing ``image_generate`` tool
-doesn't expose: **N variants** (loop) and **reference-image grounding** (so each
-animation row stays the same character as the chosen base).
-
-Reference grounding only works on providers that support it — currently OpenAI
-``gpt-image-2`` (image edits) and Krea (style references). We resolve to one of
-those and surface a clear, actionable error otherwise rather than silently
-producing an ungrounded, drifting pet.
+"""
+宠物图像生成 —— AI 辅助的立绘创建。
 """
 
 from __future__ import annotations

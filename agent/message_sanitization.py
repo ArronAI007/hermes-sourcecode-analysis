@@ -1,15 +1,5 @@
-"""Message and tool-payload sanitization helpers.
-
-Pure functions extracted from ``run_agent.py`` so the AIAgent module can
-stay focused on the conversation loop.  These walk OpenAI-format message
-lists and structured payloads, repairing or stripping problematic
-characters that would otherwise crash ``json.dumps`` inside the OpenAI
-SDK or be rejected by upstream APIs.
-
-All helpers are stateless and side-effect-free except for in-place
-mutation of their input (where documented).  Backward-compatible
-re-exports from ``run_agent`` remain in place so existing imports
-``from run_agent import _sanitize_surrogates`` keep working.
+"""
+消息消毒 —— 敏感信息过滤与隐私保护。
 """
 
 from __future__ import annotations

@@ -1,29 +1,5 @@
-"""Context compression — extract the AIAgent methods that drive summarisation.
-
-Three concerns live here:
-
-* :func:`check_compression_model_feasibility` — startup probe of the
-  configured auxiliary compression model.  Warns when the aux context
-  window can't fit the main model's compression threshold; auto-lowers
-  the session threshold when possible; hard-rejects auxes below
-  ``MINIMUM_CONTEXT_LENGTH``.
-
-* :func:`replay_compression_warning` — re-emit a stored warning through
-  the gateway ``status_callback`` once it's wired up (the callback is
-  set after :class:`AIAgent` construction).
-
-* :func:`compress_context` — the actual compression call.  Runs the
-  configured compressor, splits the SQLite session, rotates the
-  session_id, notifies plugin context engines / memory providers, and
-  returns the compressed message list and freshly-built system prompt.
-
-* :func:`try_shrink_image_parts_in_messages` — image-too-large recovery
-  helper that re-encodes ``data:image/...;base64,...`` parts at a smaller
-  size so retries can fit under provider ceilings (Anthropic's 5 MB).
-
-``run_agent`` keeps thin wrappers for each so existing call sites
-(``self._compress_context(...)``) keep working.  Tests that exercise
-these paths see no behavioural change.
+"""
+对话压缩 —— 基于 LLM 的多轮对话精简。
 """
 
 from __future__ import annotations

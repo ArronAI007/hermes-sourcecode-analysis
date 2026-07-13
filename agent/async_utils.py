@@ -1,25 +1,7 @@
-"""Async/sync bridging helpers.
-
-The codebase has ~30 sites that schedule a coroutine onto an event loop from a
-worker thread via :func:`asyncio.run_coroutine_threadsafe`.  That function can
-raise :class:`RuntimeError` (e.g. the loop was closed during a shutdown race),
-and when it does the coroutine object is never awaited and never closed —
-which triggers a ``"coroutine '<name>' was never awaited"`` RuntimeWarning and
-leaks the coroutine's frame until GC.
-
-:func:`safe_schedule_threadsafe` wraps the call, closes the coroutine on
-scheduling failure, and returns ``None`` (instead of a half-formed future) so
-callers can branch cleanly:
-
-    fut = safe_schedule_threadsafe(coro, loop)
-    if fut is None:
-        return  # or fallback behavior
-    fut.result(timeout=5)
-
-The helper deliberately does NOT also handle ``future.result()`` failures —
-that is a separate concern.  Once the loop has accepted the coroutine, its
-lifecycle belongs to the loop, not the scheduling thread.
 """
+异步工具 —— 并发执行、异步迭代和任务管理。
+"""
+
 from __future__ import annotations
 
 import asyncio

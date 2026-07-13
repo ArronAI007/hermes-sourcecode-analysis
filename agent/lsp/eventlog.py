@@ -1,40 +1,7 @@
-"""Structured logging with steady-state silence for the LSP layer.
-
-The LSP layer fires on every write_file/patch.  In a busy session
-that's hundreds of events.  We want users to be able to ``rg`` the
-log for "did LSP fire on that edit?" without drowning in noise.
-
-The level model:
-
-- ``DEBUG`` for steady-state events that have no novel signal:
-  ``clean``, ``feature off``, ``extension not mapped``, ``no project
-  root for already-announced file``, ``server unavailable for
-  already-announced binary``.  These never reach ``agent.log`` at the
-  default INFO threshold.
-
-- ``INFO`` for state transitions worth surfacing exactly once per
-  session: ``active for <root>`` the first time a (server_id,
-  workspace_root) client starts, ``no project root for <path>``
-  the first time we see that file.  Plus every diagnostic event
-  (those are inherently rare and per-edit, exactly what users grep
-  for).
-
-- ``WARNING`` for action-required failures: ``server unavailable``
-  (binary not on PATH) the first time per (server_id, binary),
-  ``no server configured`` once per language.  Per-call WARNING for
-  timeouts and unexpected bridge exceptions.
-
-The dedup is in-process module-level sets.  Each set grows at most by
-the number of distinct (server_id, root) and (server_id, binary)
-pairs touched in one Python process — bytes of memory in even an
-aggressive monorepo session.  Bounded LRU was rejected: evicting an
-entry would risk re-firing the WARNING/INFO line we explicitly want
-to suppress.
-
-Grep recipe::
-
-    tail -f ~/.hermes/logs/agent.log | rg 'lsp\\['
 """
+LSP 事件日志 —— 协议消息的审计记录。
+"""
+
 from __future__ import annotations
 
 import logging

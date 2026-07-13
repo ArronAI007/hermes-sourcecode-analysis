@@ -1,21 +1,5 @@
 """
-Image Generation Provider Registry
-==================================
-
-Central map of registered providers. Populated by plugins at import-time via
-``PluginContext.register_image_gen_provider()``; consumed by the
-``image_generate`` tool to dispatch each call to the active backend.
-
-Active selection
-----------------
-The active provider is chosen by ``image_gen.provider`` in ``config.yaml``.
-If unset, :func:`get_active_provider` applies fallback logic:
-
-1. If exactly one provider is registered, use it.
-2. Otherwise if a provider named ``fal`` is registered, use it (legacy
-   default — matches pre-plugin behavior).
-3. Otherwise return ``None`` (the tool surfaces a helpful error pointing
-   the user at ``hermes tools``).
+图像生成注册表 —— 提供商发现与负载均衡。
 """
 
 from __future__ import annotations

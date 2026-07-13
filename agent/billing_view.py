@@ -1,15 +1,5 @@
-"""Surface-agnostic core for the Phase 2b terminal-billing screens.
-
-One fetch/parse per concern, consumed identically by the CLI handler
-(``cli.py::_show_billing``), the TUI JSON-RPC methods
-(``tui_gateway/server.py``), and any other surface. Mirrors the proven
-``agent/account_usage.py::build_credits_view`` pattern: parse the server payload
-into a frozen dataclass; **fail open** — when not logged in or the portal is
-unreachable, return a struct with ``logged_in=False`` and let the surface degrade
-gracefully (never crash).
-
-Money discipline: the server emits decimal STRINGS (``"142.5"``, not fixed 2dp).
-We keep them as :class:`decimal.Decimal` end-to-end and only format for display.
+"""
+计费视图 —— 成本估算与使用量展示。
 """
 
 from __future__ import annotations

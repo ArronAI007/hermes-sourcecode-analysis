@@ -1,37 +1,5 @@
 """
-Browser Provider Registry
-=========================
-
-Central map of registered cloud browser providers. Populated by plugins at
-import-time via :meth:`PluginContext.register_browser_provider`; consumed by
-:func:`tools.browser_tool._get_cloud_provider` to route each cloud-mode
-``browser_*`` tool call to the active backend.
-
-Active selection
-----------------
-The active provider is chosen by configuration with this precedence:
-
-1. ``browser.cloud_provider`` in ``config.yaml`` (explicit override).
-2. Legacy preference order — ``browser-use`` → ``browserbase`` — filtered by
-   availability. Matches the historic auto-detect order in
-   :func:`tools.browser_tool._get_cloud_provider` (Browser Use checked first
-   because it covers both the managed Nous gateway and direct API key path;
-   Browserbase as the older direct-credentials fallback). ``firecrawl`` is
-   intentionally NOT in the legacy walk — users only get Firecrawl as a
-   cloud browser when they explicitly set ``browser.cloud_provider:
-   firecrawl``, matching pre-migration behaviour where Firecrawl was never
-   auto-selected.
-3. Otherwise ``None`` — the dispatcher falls back to local browser mode.
-
-The explicit-config branch (rule 1) intentionally ignores ``is_available()``
-so the dispatcher surfaces a typed "X_API_KEY is not set" error to the user
-instead of silently switching backends. Matches the legacy
-:func:`tools.browser_tool._get_cloud_provider` behaviour for configured names.
-
-Note: there is no "capability" split here (unlike the web subsystem, which
-has search/extract/crawl). Every browser provider implements the full
-:class:`agent.browser_provider.BrowserProvider` lifecycle; the registry's
-job is purely selection, not capability routing.
+浏览器注册表 —— 浏览器实例的发现与管理。
 """
 
 from __future__ import annotations

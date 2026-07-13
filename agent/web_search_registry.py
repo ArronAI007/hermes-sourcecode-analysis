@@ -1,33 +1,5 @@
 """
-Web Search Provider Registry
-============================
-
-Central map of registered web providers. Populated by plugins at import-time
-via :meth:`PluginContext.register_web_search_provider`; consumed by the
-``web_search`` and ``web_extract`` tool wrappers in :mod:`tools.web_tools` to
-dispatch each call to the active backend.
-
-Active selection
-----------------
-The active provider is chosen by configuration with this precedence:
-
-1. ``web.search_backend`` / ``web.extract_backend``
-   (per-capability override).
-2. ``web.backend`` (shared fallback).
-3. If exactly one capability-eligible provider is registered AND available,
-   use it.
-4. Legacy preference order — ``firecrawl`` → ``parallel`` → ``tavily`` →
-   ``exa`` → ``searxng`` → ``brave-free`` → ``ddgs`` — filtered by
-   availability. Matches the historic ``tools.web_tools._get_backend()``
-   candidate order so installs that never set a config key keep landing
-   on the same provider they did before the plugin migration.
-5. Otherwise ``None`` — the tool surfaces a helpful error pointing at
-   ``hermes tools``.
-
-The capability filter (``supports_search`` / ``supports_extract``) is
-applied at every step so a search-only provider (``brave-free``)
-configured as ``web.extract_backend`` correctly falls through to an
-extract-capable backend.
+网页搜索注册表 —— Google/Bing/DuckDuckGo 的集成。
 """
 
 from __future__ import annotations

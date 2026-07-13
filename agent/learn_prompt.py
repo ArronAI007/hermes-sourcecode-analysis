@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+"""
+学习提示 —— 从对话中提取技能的自动提示构建。
+"""
+
 """``/learn`` — build the standards-guided prompt that turns whatever the user
 described into a reusable skill.
 

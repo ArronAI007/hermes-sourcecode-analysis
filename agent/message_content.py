@@ -1,3 +1,8 @@
+
+"""
+消息内容 —— 多模态消息（文本/图像/音频）的封装。
+"""
+
 from __future__ import annotations
 
 from collections.abc import Mapping

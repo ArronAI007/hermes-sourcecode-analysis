@@ -1,9 +1,5 @@
-"""Pure tool-call loop guardrail primitives.
-
-The controller in this module is intentionally side-effect free: it tracks
-per-turn tool-call observations and returns decisions. Runtime code owns whether
-those decisions become warning guidance, synthetic tool results, or controlled
-turn halts.
+"""
+工具护栏 —— 工具调用的安全策略与拦截。
 """
 
 from __future__ import annotations

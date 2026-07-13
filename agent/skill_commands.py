@@ -1,7 +1,5 @@
-"""Shared slash command helpers for skills.
-
-Shared between CLI (cli.py) and gateway (gateway/run.py) so both surfaces
-can invoke skills via /skill-name commands.
+"""
+技能命令 —— 斜杠命令与技能交互的桥接。
 """
 
 import json

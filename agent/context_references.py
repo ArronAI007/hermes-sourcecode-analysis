@@ -1,3 +1,8 @@
+
+"""
+上下文引用 —— 文件/符号的语义引用解析。
+"""
+
 from __future__ import annotations
 
 import asyncio

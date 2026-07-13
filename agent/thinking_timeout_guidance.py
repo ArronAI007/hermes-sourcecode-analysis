@@ -1,30 +1,5 @@
-"""Thinking-timeout detection and user-facing guidance for reasoning models.
-
-When a known reasoning model (NVIDIA Nemotron 3 Ultra, OpenAI o1/o3,
-Anthropic Opus 4.x thinking, DeepSeek R1, Qwen QwQ, xAI Grok reasoning)
-hits a transport-layer error before the first content token arrives, the
-upstream proxy has almost certainly idle-killed a long thinking stream —
-not a true context overflow or a configuration error.  The user needs
-distinct guidance for this case:
-
-    "The model's thinking phase exceeded the upstream proxy's idle
-     timeout before the first content token arrived.  This is a known
-     issue with reasoning models behind cloud gateways (NVIDIA NIM,
-     OpenAI, Anthropic, DeepSeek).  Workarounds in priority order:
-     1. Set `providers.<provider>.models.<model>.stale_timeout_seconds: 900`
-        in `~/.hermes/config.yaml` to extend the per-call timeout...
-     2. Lower `reasoning_budget` or set `reasoning_effort: medium`...
-     3. Use a smaller / faster reasoning model..."
-
-The existing `_is_stream_drop` guidance at
-``agent/conversation_loop.py:3464-3486`` fires for large-file-write
-stream drops ("try execute_code with Python's open() for large files")
-which is the WRONG advice for the thinking-timeout case.  This module
-provides the detection and the message as standalone helpers so the
-detection logic is unit-testable without driving the full retry loop,
-and the message text can be regression-tested for spelling and accuracy.
-
-Part 2 of Fixes #52310.
+"""
+思维超时指导 —— 推理时长的配置建议。
 """
 
 from __future__ import annotations

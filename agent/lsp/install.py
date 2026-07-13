@@ -1,29 +1,7 @@
-"""Auto-installation of LSP server binaries.
-
-Tries to install missing servers using whatever package manager is
-appropriate.  All installs go to a Hermes-owned bin staging dir,
-``<HERMES_HOME>/lsp/bin/``, so we don't pollute the user's global
-toolchain.
-
-Strategies:
-
-- ``auto`` — attempt to install with the best available package
-  manager.  This is the default.
-- ``manual`` — never install; if a binary is missing, the server is
-  silently skipped and the user is told about it via ``hermes lsp
-  status``.
-- ``off`` — same as ``manual`` for now (kept distinct so we can
-  evolve behavior later, e.g. logging differently).
-
-The actual installs happen synchronously the first time a server is
-needed and concurrent calls to :func:`try_install` for the same
-package are deduplicated via a per-package lock.
-
-Failure modes are non-fatal: every install path is wrapped in
-try/except and returns ``None`` on failure.  The tool layer then
-falls back to its in-process syntax checker, exactly as if the user
-hadn't enabled LSP at all.
 """
+LSP 安装器 —— 语言服务器的自动下载与配置。
+"""
+
 from __future__ import annotations
 
 import logging

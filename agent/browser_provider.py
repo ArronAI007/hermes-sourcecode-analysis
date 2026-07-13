@@ -1,38 +1,5 @@
 """
-Browser Provider ABC
-====================
-
-Defines the pluggable-backend interface for cloud browser providers
-(Browserbase, Browser Use, Firecrawl, …). Providers register instances via
-:meth:`PluginContext.register_browser_provider`; the active one (selected via
-``browser.cloud_provider`` in ``config.yaml``) services every cloud-mode
-``browser_*`` tool call.
-
-Providers live in ``<repo>/plugins/browser/<name>/`` (built-in, auto-loaded as
-``kind: backend``) or ``~/.hermes/plugins/browser/<name>/`` (user, opt-in via
-``plugins.enabled``).
-
-This ABC mirrors :class:`agent.web_search_provider.WebSearchProvider` (PR
-#25182) — same shape, same registration flow, same picker integration. The
-legacy in-tree ``tools.browser_providers.base.CloudBrowserProvider`` ABC was
-deleted in PR #25214 (this work) along with the per-vendor inline modules in
-``tools/browser_providers/``; the lifecycle contract documented below is
-preserved bit-for-bit so the tool wrapper (:mod:`tools.browser_tool`) does
-not have to translate.
-
-Session metadata contract (preserved from the legacy ``CloudBrowserProvider``)::
-
-    {
-        "session_name": str,        # unique name for agent-browser --session
-        "bb_session_id": str,       # provider session ID (for close/cleanup)
-        "cdp_url": str,             # CDP websocket URL
-        "features": dict,           # feature flags that were enabled
-        "external_call_id": str,    # optional, managed-gateway billing key
-    }
-
-``bb_session_id`` is a legacy key name kept verbatim for backward compat with
-:mod:`tools.browser_tool` — it holds the provider's session ID regardless of
-which provider is in use.
+浏览器提供商 —— Playwright/Selenium 自动化浏览器抽象。
 """
 
 from __future__ import annotations

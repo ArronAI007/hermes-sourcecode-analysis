@@ -1,17 +1,5 @@
-"""On-disk pet store — install / list / resolve pets.
-
-Pets live under ``get_hermes_home()/pets/<slug>/`` so every profile gets its
-own set (we deliberately do **not** reuse petdex's ``~/.codex/pets`` default —
-that's owned by the petdex npm CLI and isn't profile-aware).  Each installed
-pet directory holds:
-
-    pets/<slug>/
-        pet.json            # {id, displayName, description, spritesheetPath}
-        spritesheet.webp    # (or .png)
-
-The active pet is resolved from the caller-supplied ``display.pet.slug`` config
-value (falling back to the first installed pet), so this module stays free of
-the config loader.
+"""
+宠物商店 —— 装饰品与道具的交易系统。
 """
 
 from __future__ import annotations

@@ -1,27 +1,5 @@
-"""Per-attempt recovery bookkeeping for the conversation turn loop.
-
-The inner retry loop in ``run_conversation`` (``while retry_count <
-max_retries``) makes several distinct recovery attempts on a single model API
-call: a credential-pool 429 retry, a per-provider OAuth refresh (codex,
-anthropic, nous, copilot), a long-context compression restart, a length-
-continuation restart, and a handful of format-recovery branches (thinking-
-signature stripping, multimodal-tool-content stripping, llama.cpp grammar
-fallback, image shrink, invalid-encrypted-content, 1M-beta header).
-
-Each of those branches is guarded by a one-shot boolean so it fires at most
-once per attempt. They used to be ~16 bare ``*_attempted`` / ``has_retried_*``
-/ ``restart_with_*`` locals declared inline before the loop and threaded
-through its 2,400-line body. ``TurnRetryState`` collapses them into one object
-the loop mutates in place (``state.codex_auth_retry_attempted = True``), giving
-the recovery bookkeeping a single named, testable home.
-
-Loop-control variables (``retry_count``, ``max_retries``,
-``max_compression_attempts``) intentionally stay as plain locals — they are the
-``while`` mechanics, not recovery bookkeeping, and putting them on the object
-would add indirection without clarifying anything.
-
-This module is dependency-free so it can be unit-tested in isolation and
-imported by the turn loop without an import cycle.
+"""
+回合重试状态 —— 失败恢复与幂等性控制。
 """
 
 from __future__ import annotations

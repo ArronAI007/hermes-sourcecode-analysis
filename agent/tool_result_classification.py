@@ -1,4 +1,6 @@
-"""Shared helpers for classifying tool result payloads."""
+"""
+工具结果分类 —— 成功/失败/需要重试的判定。
+"""
 
 from __future__ import annotations
 

@@ -1,30 +1,5 @@
-"""AWS Bedrock Converse API adapter for Hermes Agent.
-
-Provides native integration with Amazon Bedrock using the Converse API,
-bypassing the OpenAI-compatible endpoint in favor of direct AWS SDK calls.
-This enables full access to the Bedrock ecosystem:
-
-  - **Native Converse API**: Unified interface for all Bedrock models
-    (Claude, Nova, Llama, Mistral, etc.) with streaming support.
-  - **AWS credential chain**: IAM roles, SSO profiles, environment variables,
-    instance metadata — zero API key management for AWS-native environments.
-  - **Dynamic model discovery**: Auto-discovers available foundation models
-    and cross-region inference profiles via the Bedrock control plane.
-  - **Guardrails support**: Optional Bedrock Guardrails configuration for
-    content filtering and safety policies.
-  - **Inference profiles**: Supports cross-region inference profiles
-    (us.anthropic.claude-*, global.anthropic.claude-*) for better capacity
-    and automatic failover.
-
-Architecture follows the same pattern as ``anthropic_adapter.py``:
-  - All Bedrock-specific logic is isolated in this module.
-  - Messages/tools are converted between OpenAI format and Converse format.
-  - Responses are normalized back to OpenAI-compatible objects for the agent loop.
-
-Reference: OpenClaw's ``extensions/amazon-bedrock/`` plugin, which implements
-the same Converse API integration in TypeScript via ``@aws-sdk/client-bedrock``.
-
-Requires: ``boto3`` (optional dependency — only needed when using the Bedrock provider).
+"""
+AWS Bedrock 适配器 —— boto3 调用与区域解析。
 """
 
 import json

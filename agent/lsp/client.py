@@ -1,44 +1,7 @@
-"""Async LSP client over stdin/stdout.
-
-One :class:`LSPClient` corresponds to one ``(language_server, workspace_root)``
-pair — exactly what OpenCode keys clients on, and the same shape Claude
-Code uses.  The client owns a child process, drives the JSON-RPC
-exchange, and exposes:
-
-- :meth:`open_file` / :meth:`change_file` — text document sync
-- :meth:`wait_for_diagnostics` — block until the server emits fresh
-  diagnostics for a specific file (or a timeout fires)
-- :meth:`diagnostics_for` — read the current per-file diagnostic store
-- :meth:`shutdown` — graceful close + SIGTERM/SIGKILL fallback
-
-The class is designed for async use from a single asyncio event loop.
-The :class:`agent.lsp.manager.LSPService` runs an event loop in a
-background thread so the synchronous file_operations layer can call
-into it via :func:`agent.lsp.manager.LSPService.touch_file`.
-
-Implementation notes:
-
-- Push diagnostics are stored per-URI in :attr:`_push_diagnostics` from
-  ``textDocument/publishDiagnostics`` notifications.  Pull diagnostics
-  go in :attr:`_pull_diagnostics`.  The merged view dedupes by content.
-
-- Whole-document sync.  Even when the server advertises incremental
-  sync, we send a single ``contentChanges`` entry replacing the
-  entire document.  Pretending to be incremental while sending a
-  full replacement is well-tolerated by every major server and saves
-  range bookkeeping.  See OpenCode's ``client.ts:584-659`` for the
-  same trick.
-
-- The "touch-file dance": every ``open_file`` call also fires a
-  ``workspace/didChangeWatchedFiles`` notification (CREATED on the
-  first open, CHANGED thereafter).  Some servers (clangd, eslint)
-  only re-scan when this notification fires, even though the LSP spec
-  doesn't strictly require it.
-
-- ``ContentModified`` (-32801) errors get retried with exponential
-  backoff up to 3 times.  This matches Claude Code's
-  ``LSPServerInstance.sendRequest``.
 """
+LSP 客户端 —— 与语言服务器的 JSON-RPC 通信。
+"""
+
 from __future__ import annotations
 
 import asyncio

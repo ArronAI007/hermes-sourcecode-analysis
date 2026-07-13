@@ -1,24 +1,5 @@
-"""Deterministic spritesheet assembly — generated row strips → Hermes atlas.
-
-Image-generation models are good at *drawing* a row of poses but bad at exact
-grid geometry, so the model never owns the atlas layout: it produces one loose
-horizontal strip per state, and these deterministic ops slice that strip into
-clean, centered, transparent ``192x208`` cells and pack them into the sheet our
-renderer reads.
-
-The atlas follows the **petdex/Codex standard**: 8 columns x 9 rows of
-``192x208`` cells (``1536x1872``), with the row order + per-row frame counts
-from OpenAI's ``hatch-pet`` skill. Our renderer (:mod:`agent.pet.render`) keys
-frames as ``rows = states, cols = frames`` via
-:data:`agent.pet.constants.CODEX_STATE_ROWS`, and a pet built here is a valid
-``petdex submit`` spritesheet. Rows shorter than 8 columns leave the trailing
-cells fully transparent.
-
-Note ``running`` is the *working* state (in-place processing), NOT locomotion —
-``running-right`` / ``running-left`` are the actual directional walk cycles.
-
-The frame-segmentation, fit-to-cell, and transparency-residue logic is adapted
-from OpenAI's ``hatch-pet`` skill (openai/skills, Apache-2.0).
+"""
+宠物图集 —— 精灵表与动画帧管理。
 """
 
 from __future__ import annotations

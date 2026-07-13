@@ -1,29 +1,5 @@
 """
-TTS Provider Registry
-=====================
-
-Central map of registered TTS providers. Populated by plugins at
-import-time via :meth:`PluginContext.register_tts_provider`; consumed
-by :mod:`tools.tts_tool` to dispatch ``text_to_speech`` tool calls to
-the active plugin backend **when** the configured ``tts.provider``
-name is neither a built-in nor a command-type provider.
-
-Built-ins-always-win
---------------------
-Plugin names that collide with a built-in TTS provider (``edge``,
-``openai``, ``elevenlabs``, ``minimax``, ``gemini``, ``mistral``,
-``xai``, ``piper``, ``kittentts``, ``neutts``) are rejected at
-registration with a warning. This invariant is also re-checked at
-dispatch time in :func:`tools.tts_tool._dispatch_to_plugin_provider`.
-
-Command-providers-win-over-plugins
-----------------------------------
-This registry doesn't enforce the command-vs-plugin precedence — that
-lives in the dispatcher, which checks for a same-name
-``tts.providers.<name>: type: command`` entry before consulting the
-registry. The rationale is locality: a name declared in the user's
-``config.yaml`` is more specific to their setup than a plugin that
-happens to be installed.
+TTS 注册表 —— ElevenLabs/Azure 等语音服务的发现。
 """
 
 from __future__ import annotations

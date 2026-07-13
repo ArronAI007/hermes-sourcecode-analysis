@@ -1,43 +1,5 @@
-"""Skill bundles — aliases that load multiple skills under one slash command.
-
-A skill bundle is a small YAML file that names a set of skills to load
-together. Invoking ``/<bundle-name>`` from the CLI or gateway loads every
-referenced skill's full content into a single user message, the same way
-``/<skill-name>`` does — but for N skills at once.
-
-Storage
--------
-Bundles live in ``~/.hermes/skill-bundles/*.yaml`` (and the equivalent
-profile-aware directory under ``HERMES_HOME``). Each file looks like::
-
-    name: backend-dev
-    description: Backend feature work — code review, testing, PR workflow.
-    skills:
-      - github-code-review
-      - test-driven-development
-      - github-pr-workflow
-    instruction: |
-      Optional extra guidance to inject above the skill bodies.
-
-The file's stem is treated as a fallback name when ``name:`` is absent, so
-dropping a YAML into the directory is enough to register a new bundle.
-
-Conflict resolution
--------------------
-If a bundle and a skill share the same slash name, the bundle wins. The
-slash command dispatch checks bundles first, then falls back to skills.
-This is the intended behavior — a user who names a bundle ``research``
-explicitly wants ``/research`` to mean their bundle, not whatever skill
-happens to share the slug.
-
-Public API
-----------
-- :func:`get_skill_bundles` — return ``{"/slug": bundle_info}``
-- :func:`resolve_bundle_command_key` — map a user-typed command to its slug
-- :func:`build_bundle_invocation_message` — produce the full user message
-- :func:`reload_bundles` — re-scan disk and return a diff
-- :func:`list_bundles` — return rich info for display (``hermes bundles``)
-- :func:`save_bundle` / :func:`delete_bundle` — file-level operations
+"""
+技能包 —— 相关技能的组合与批量加载。
 """
 
 from __future__ import annotations

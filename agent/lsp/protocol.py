@@ -1,18 +1,7 @@
-"""Minimal LSP JSON-RPC 2.0 framer over async streams.
-
-LSP wire format:
-
-    Content-Length: <bytes>\\r\\n
-    \\r\\n
-    <utf-8 JSON body>
-
-The body is a JSON-RPC 2.0 envelope: request, response, or notification.
-
-This module replaces what ``vscode-jsonrpc/node`` would do in a
-TypeScript implementation.  We keep it deliberately small — just the
-framer + envelope helpers — so :class:`agent.lsp.client.LSPClient` can
-focus on protocol semantics.
 """
+LSP 协议 —— 消息类型与序列化定义。
+"""
+
 from __future__ import annotations
 
 import asyncio

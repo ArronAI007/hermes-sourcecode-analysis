@@ -1,46 +1,5 @@
 """
-Text-to-Speech Provider ABC
-============================
-
-Defines the pluggable-backend interface for text-to-speech synthesis.
-Providers register instances via
-``PluginContext.register_tts_provider()``; the active one (selected via
-``tts.provider`` in ``config.yaml``) services every ``text_to_speech``
-tool call **only when the configured name is neither a built-in nor a
-command-type provider declared under ``tts.providers.<name>``**.
-
-Three coexisting TTS extension surfaces — in resolution order:
-
-1. **Built-in providers** (``BUILTIN_TTS_PROVIDERS`` in
-   :mod:`tools.tts_tool`) — native Python implementations (edge, openai,
-   elevenlabs, …). **Always win** — plugins cannot shadow them.
-2. **Command-type providers** declared under ``tts.providers.<name>:
-   type: command`` (PR #17843, commit ``2facea7f7``). Wire any local
-   CLI into Hermes with shell-template placeholders. **Wins over a
-   same-name plugin** — config is more local than plugin install.
-3. **Plugin-registered providers** (this ABC). For backends that need a
-   Python SDK, streaming bytes, OAuth refresh, or voice-listing APIs
-   the shell-template grammar can't reasonably express.
-
-Built-ins-always-win is enforced at registration time
-(:func:`agent.tts_registry.register_provider` rejects names in
-``BUILTIN_TTS_PROVIDERS`` with a warning) AND at dispatch time
-(:func:`tools.tts_tool._dispatch_to_plugin_provider` re-checks
-defensively). The dispatcher also rejects plugin dispatch when a same-
-name command provider is configured.
-
-Providers live in ``<repo>/plugins/tts/<name>/`` (built-in plugins, no
-shipped today) or ``~/.hermes/plugins/tts/<name>/`` (user-installed).
-None ship in-tree as of issue #30398 — the hook is additive
-infrastructure waiting for a real consumer (Cartesia, Fish Audio, …).
-
-Response contract
------------------
-:meth:`TTSProvider.synthesize` writes the audio bytes to ``output_path``
-and returns the path as a string. Implementations should raise on
-failure — the dispatcher converts exceptions into the standard
-``{success: False, error: …}`` JSON envelope the rest of Hermes
-expects.
+TTS 提供商 —— 文本到语音的抽象接口。
 """
 
 from __future__ import annotations

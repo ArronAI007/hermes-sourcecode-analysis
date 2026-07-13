@@ -1,25 +1,5 @@
-"""MemoryManager — 协调 Agent 的记忆提供者。
-
-这是 run_agent.py 中的单一集成点。用一个统一的管理器替代了分散的各后端代码，
-通过注册的提供者委派操作。
-
-设计约束：同时只允许一个外部插件提供者 — 尝试注册第二个外部提供者时会
-被拒绝并发出警告。这防止了工具 Schema 膨胀和记忆后端冲突。
-
-在 run_agent.py 中的使用方式：
-    self._memory_manager = MemoryManager()
-    # 只能添加以下其中之一：
-    self._memory_manager.add_provider(plugin_provider)
-
-    # 系统提示
-    prompt_parts.append(self._memory_manager.build_system_prompt())
-
-    # 轮次前：获取记忆上下文
-    context = self._memory_manager.prefetch_all(user_message)
-
-    # 轮次后：同步记忆
-    self._memory_manager.sync_all(user_msg, assistant_response)
-    self._memory_manager.queue_prefetch_all(user_msg)
+"""
+记忆管理器 —— 外部记忆插件的协调与注入。
 """
 
 from __future__ import annotations

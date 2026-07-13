@@ -1,4 +1,6 @@
-"""Shared file safety rules used by both tools and ACP shims."""
+"""
+文件安全 —— 路径遍历防护与敏感文件访问控制。
+"""
 
 from __future__ import annotations
 

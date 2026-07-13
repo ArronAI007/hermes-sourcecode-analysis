@@ -1,21 +1,5 @@
-"""Models.dev registry integration — primary database for providers and models.
-
-Fetches from https://models.dev/api.json — a community-maintained database
-of 4000+ models across 109+ providers.  Provides:
-
-- **Provider metadata**: name, base URL, env vars, documentation link
-- **Model metadata**: context window, max output, cost/M tokens, capabilities
-  (reasoning, tools, vision, PDF, audio), modalities, knowledge cutoff,
-  open-weights flag, family grouping, deprecation status
-
-Data resolution order (like TypeScript OpenCode):
-  1. Bundled snapshot (ships with the package — offline-first)
-  2. Disk cache (~/.hermes/models_dev_cache.json)
-  3. Network fetch (https://models.dev/api.json)
-  4. Background refresh every 60 minutes
-
-Other modules should import the dataclasses and query functions from here
-rather than parsing the raw JSON themselves.
+"""
+开发模型 —— 实验性功能与预发布模型支持。
 """
 
 import json

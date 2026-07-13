@@ -1,9 +1,5 @@
-"""Mixture-of-Agents runtime helpers for /moa turns.
-
-The slash command is deliberately not a model tool. It marks one user turn as
-MoA-enabled; the normal Hermes agent loop still owns tool calling and turn
-termination, while this module gathers reference-model context before each model
-iteration.
+"""
+MoA 循环 —— Mixture-of-Agents 多模型聚合推理。
 """
 
 from __future__ import annotations

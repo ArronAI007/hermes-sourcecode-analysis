@@ -1,31 +1,7 @@
-"""Language Server Protocol (LSP) integration for Hermes Agent.
-
-Hermes runs full language servers (pyright, gopls, rust-analyzer,
-typescript-language-server, etc.) as subprocesses and pipes their
-``textDocument/publishDiagnostics`` output into the post-write lint
-delta filter used by ``write_file`` and ``patch``.
-
-LSP is **gated on git workspace detection** — if the agent's cwd is
-inside a git repository, LSP runs against that workspace; otherwise the
-file_operations layer falls back to its existing in-process syntax
-checks.  This keeps users on user-home cwd's (e.g. Telegram gateway
-chats) from spawning daemons they don't need.
-
-Public API:
-
-    from agent.lsp import get_service
-
-    svc = get_service()
-    if svc and svc.enabled_for(path):
-        await svc.touch_file(path)
-        diags = svc.diagnostics_for(path)
-
-The bulk of the wiring is internal — most callers only need the layer
-in :func:`tools.file_operations.FileOperations._check_lint_delta`,
-which is already wired (see that module).
-
-Architecture is documented in ``website/docs/user-guide/features/lsp.md``.
 """
+LSP 协议支持 —— 语言服务器协议客户端基础。
+"""
+
 from __future__ import annotations
 
 import atexit

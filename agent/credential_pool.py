@@ -1,4 +1,6 @@
-"""Persistent multi-credential pool for same-provider failover."""
+"""
+凭证池 —— 多密钥轮询与自动故障转移。
+"""
 
 from __future__ import annotations
 

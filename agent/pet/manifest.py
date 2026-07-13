@@ -1,21 +1,5 @@
-"""Fetch the public petdex manifest.
-
-``https://petdex.dev/api/manifest`` 307-redirects to a JSON document on R2:
-
-    {
-      "generatedAt": "...",
-      "total": 2926,
-      "pets": [
-        {"slug": "boba", "displayName": "Boba", "kind": "creature",
-         "submittedBy": "railly",
-         "spritesheetUrl": "https://assets.petdex.dev/.../spritesheet.webp",
-         "petJsonUrl": "https://assets.petdex.dev/.../pet.json",
-         "zipUrl": "https://assets.petdex.dev/.../boba.zip"},
-        ...
-      ]
-    }
-
-Read-only and unauthenticated; no credentials involved.
+"""
+宠物清单 —— 品种定义与解锁条件。
 """
 
 from __future__ import annotations

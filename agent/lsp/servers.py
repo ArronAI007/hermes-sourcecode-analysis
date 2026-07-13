@@ -1,22 +1,7 @@
-"""Server registry — per-language LSP server definitions.
-
-Each :class:`ServerDef` knows how to:
-
-- match a file by extension (or basename for extensionless files like
-  ``Dockerfile``),
-- resolve a project root from a file path (often via
-  :func:`agent.lsp.workspace.nearest_root`),
-- assemble the spawn command (binary, args, env, cwd),
-- compute LSP ``initializationOptions``.
-
-Auto-installation is a separate concern handled by
-:mod:`agent.lsp.install`.  This module describes WHAT to spawn; the
-install module makes the binary appear on PATH if it isn't there.
-
-The full set of servers ships with the package, but most are only
-*invoked* when the user actually edits a file in that language.  This
-keeps cold-start fast — we don't probe binaries until needed.
 """
+LSP 服务器 —— 已知语言服务器的配置清单。
+"""
+
 from __future__ import annotations
 
 import logging

@@ -1,11 +1,5 @@
-"""LM Studio reasoning-effort resolution shared by the chat-completions
-transport and run_agent's iteration-limit summary path.
-
-LM Studio publishes per-model ``capabilities.reasoning.allowed_options`` (e.g.
-``["off","on"]`` for toggle-style models, ``["off","minimal","low"]`` for
-graduated models). We map the user's ``reasoning_config`` onto LM Studio's
-OpenAI-compatible vocabulary, then clamp against the model's allowed set so
-the server doesn't 400 on an unsupported effort.
+"""
+LM Studio 推理 —— 本地模型的思维链提取。
 """
 
 from __future__ import annotations

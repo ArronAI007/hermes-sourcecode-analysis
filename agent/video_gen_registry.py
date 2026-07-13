@@ -1,22 +1,5 @@
 """
-Video Generation Provider Registry
-==================================
-
-Central map of registered providers. Populated by plugins at import-time via
-``PluginContext.register_video_gen_provider()``; consumed by the
-``video_generate`` tool to dispatch each call to the active backend.
-
-Active selection
-----------------
-The active provider is chosen by ``video_gen.provider`` in ``config.yaml``.
-If unset, :func:`get_active_provider` applies fallback logic:
-
-1. If exactly one provider is registered, use it.
-2. Otherwise return ``None`` (the tool surfaces a helpful error pointing
-   the user at ``hermes tools``).
-
-Mirrors ``agent/image_gen_registry.py`` so the two surfaces behave the
-same.
+视频生成注册表 —— 视频服务的发现与调度。
 """
 
 from __future__ import annotations

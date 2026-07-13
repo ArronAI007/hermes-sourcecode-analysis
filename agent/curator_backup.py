@@ -1,40 +1,5 @@
-"""Curator snapshot + rollback.
-
-A pre-run snapshot of ``~/.hermes/skills/`` (excluding ``.curator_backups/``
-itself) is taken before any mutating curator pass. Snapshots are tar.gz
-files under ``~/.hermes/skills/.curator_backups/<utc-iso>/`` with a
-companion ``manifest.json`` describing the snapshot (reason, time, size,
-counted skill files). Rollback picks a snapshot, moves the current
-``skills/`` tree aside into another snapshot so even the rollback itself
-is undoable, then extracts the chosen snapshot into place.
-
-The snapshot does NOT include:
-  - ``.curator_backups/`` (would recurse)
-  - ``.hub/`` (hub-installed skills — managed by the hub, not us)
-
-It DOES include:
-  - all SKILL.md files + their directories (``scripts/``, ``references/``,
-    ``templates/``, ``assets/``)
-  - ``.usage.json`` (usage telemetry — needed to rehydrate state cleanly)
-  - ``.archive/`` (so rollback restores previously-archived skills too)
-  - ``.curator_state`` (so rolling back also restores the last-run-at
-    pointer — otherwise the curator would immediately re-fire on the next
-    tick)
-  - ``.bundled_manifest`` (so protection markers stay consistent)
-  - ``.curator_suppressed`` (so rollback restores the set of pruned built-ins
-    the re-seeder must leave archived)
-
-Alongside the skills tarball, each snapshot also captures a copy of
-``~/.hermes/cron/jobs.json`` as ``cron-jobs.json`` when it exists. Cron
-jobs reference skills by name in their ``skills``/``skill`` fields; the
-curator's consolidation pass rewrites those in place via
-``cron.jobs.rewrite_skill_refs()``. Without capturing the pre-run state,
-rolling back the skills tree would leave cron jobs pointing at the
-umbrella skills even though the narrow skills they were originally
-configured with have been restored. We store the whole jobs.json for
-fidelity but rollback only touches the ``skills``/``skill`` fields — the
-rest (schedule, next_run_at, enabled, prompt, etc.) is live state and
-we leave it alone.
+"""
+馆长备份 —— 技能库的自动快照与回滚。
 """
 
 from __future__ import annotations

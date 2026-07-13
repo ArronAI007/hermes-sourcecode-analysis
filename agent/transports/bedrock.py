@@ -1,9 +1,5 @@
-"""AWS Bedrock Converse API transport.
-
-Delegates to the existing adapter functions in agent/bedrock_adapter.py.
-Bedrock uses its own boto3 client (not the OpenAI SDK), so the transport
-owns format conversion and normalization, while client construction and
-boto3 calls stay on AIAgent.
+"""
+Bedrock 传输 —— AWS Converse API 的流式实现。
 """
 
 from typing import Any, Dict, List, Optional

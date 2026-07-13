@@ -1,13 +1,5 @@
-"""Single source of truth for the agent working directory.
-
-`TERMINAL_CWD` is the runtime carrier for the configured working directory
-(design #19214/#19242: `terminal.cwd` is bridged once to `TERMINAL_CWD` at
-gateway/cron startup). The local-CLI backend deliberately leaves it unset and
-relies on the launch dir. Reading it in one place keeps the system prompt, the
-tool surfaces, and context-file discovery agreeing on where the agent lives.
-
-Multi-session gateways can pin a logical cwd via the `_SESSION_CWD`
-contextvar; CLI/cron fall through to `TERMINAL_CWD`/launch cwd.
+"""
+运行时工作目录 —— 工具执行环境的目录管理。
 """
 
 import os

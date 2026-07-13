@@ -1,17 +1,5 @@
-"""Codex app-server JSON-RPC client.
-
-Speaks the protocol documented in codex-rs/app-server/README.md (codex 0.125+).
-Transport is newline-delimited JSON-RPC 2.0 over stdio: spawn `codex app-server`,
-do an `initialize` handshake, then drive `thread/start` + `turn/start` and
-consume streaming `item/*` notifications until `turn/completed`.
-
-This module is the wire-level speaker only. Higher-level concerns (event
-projection into Hermes' display, approval bridging, transcript projection into
-AIAgent.messages, plugin migration) live in sibling modules.
-
-Status: optional opt-in runtime gated behind `model.openai_runtime ==
-"codex_app_server"`. Hermes' default tool dispatch is unchanged when this
-runtime is not selected.
+"""
+Codex App Server —— 本地 OpenAI Codex 代理。
 """
 
 from __future__ import annotations

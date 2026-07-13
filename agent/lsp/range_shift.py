@@ -1,29 +1,7 @@
-"""Diff-aware line-shift map for cross-edit LSP delta filtering.
-
-When an edit deletes or inserts lines in the middle of a file, every
-diagnostic below the edit point shifts to a new line number.  The
-LSPService delta filter subtracts the pre-edit baseline from the
-post-edit diagnostics keyed on ``(severity, code, source, message,
-range)`` — without an adjustment, the shifted-but-otherwise-identical
-diagnostics look brand-new and the agent gets flooded with noise.
-
-The fix used here is the same trick git's blame and unified diff use:
-build a piecewise-linear map from pre-edit line numbers to post-edit
-line numbers, then apply that map to baseline diagnostics before the
-set-difference.  Diagnostics whose pre-edit line is in a region the
-edit deleted return ``None`` and are dropped from the baseline (they
-genuinely no longer apply).
-
-Trade-off vs. dropping range from the key entirely (the previous
-fix): preserves the "new instance of an identical error at a
-different line" signal — if the model introduces a second instance
-of the same error class at a different location, that one will be
-surfaced as new instead of swallowed by content-only dedup.
-
-The map is derived from ``difflib.SequenceMatcher.get_opcodes()`` and
-exposed as a single callable so callers don't have to reason about
-diff regions.
 """
+LSP 范围偏移 —— 编辑后的位置映射。
+"""
+
 from __future__ import annotations
 
 import difflib

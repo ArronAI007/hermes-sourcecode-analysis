@@ -1,8 +1,5 @@
-"""Turn-end verification guard for coding edits.
-
-This module is intentionally policy-only. It never runs checks itself; it turns
-the passive verification ledger into a bounded follow-up when the model tries to
-finish immediately after editing code without fresh evidence.
+"""
+验证停止 —— 安全关键操作的确认流程。
 """
 
 from __future__ import annotations

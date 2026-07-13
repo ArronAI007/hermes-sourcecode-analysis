@@ -1,13 +1,5 @@
-"""Tool-call execution — sequential and concurrent dispatch.
-
-Both AIAgent methods (``_execute_tool_calls_sequential`` and
-``_execute_tool_calls_concurrent``) live here as module-level
-functions that take the parent ``AIAgent`` as their first argument.
-
-``run_agent`` keeps thin wrappers so existing call sites work; tests
-that patch ``run_agent._set_interrupt`` are honored because the
-extracted functions reach back through the ``run_agent`` module via
-``_ra()`` for that symbol.
+"""
+工具执行器 —— 并发工具调用与超时控制。
 """
 
 from __future__ import annotations

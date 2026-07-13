@@ -1,23 +1,5 @@
-"""Post-loop turn finalization for ``run_conversation``.
-
-Extracted from ``agent/conversation_loop.py`` as part of the god-file
-decomposition campaign (``~/.hermes/plans/god-file-decomposition.md``, Phase 1
-step 4 — the post-loop ``TurnFinalizer`` seam). ``run_conversation``'s tail
-(everything after the main tool-calling ``while`` loop) is lifted here verbatim:
-budget-exhaustion summary, trajectory save, session persist, turn diagnostics,
-response transforms, result-dict assembly, steer drain, and the memory/skill
-review trigger.
-
-Behavior-neutral: the body is moved unchanged. All ``agent.*`` side effects fire
-exactly as before; only the post-loop *locals* are passed in as keyword args, and
-the assembled ``result`` dict is returned to ``run_conversation`` which returns it
-to the caller. The function is synchronous with a single return — mirroring the
-region it replaces (no awaits, no early returns).
-
-Module ``logger`` is imported lazily inside the body (``from
-agent.conversation_loop import logger``) so this module never imports
-``agent.conversation_loop`` at import time -> no import cycle, and the log records
-keep the exact logger name (``"agent.conversation_loop"``).
+"""
+回合终结器 —— 工具结果收尾与下轮准备。
 """
 
 from __future__ import annotations

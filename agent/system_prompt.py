@@ -1,24 +1,5 @@
-"""System-prompt assembly for :class:`AIAgent`.
-
-The agent's system prompt is built once per session and reused across all
-turns — only context compression triggers a rebuild.  This keeps the
-upstream prefix cache warm.  See ``hermes-agent-dev``'s
-``references/system-prompt-invariant.md`` for the invariants and
-``references/self-improvement-loop.md`` for how the background-review
-fork inherits the cached prompt verbatim.
-
-Three tiers are joined with ``\\n\\n``:
-
-* ``stable``   — identity (SOUL.md or DEFAULT_AGENT_IDENTITY), tool
-  guidance, computer-use guidance, nous subscription block, tool-use
-  enforcement guidance + per-model operational guidance, skills prompt,
-  alibaba model-name workaround, environment hints, platform hints.
-* ``context``  — caller-supplied ``system_message`` plus context files
-  (AGENTS.md / .cursorrules / etc.) discovered under ``TERMINAL_CWD``.
-* ``volatile`` — memory snapshot, USER.md profile, external memory
-  provider block, timestamp/session/model/provider line.
-
-Pure helpers that read the agent's state.  AIAgent keeps thin forwarders.
+"""
+系统提示 —— 核心指令、角色定义与约束组装。
 """
 
 from __future__ import annotations

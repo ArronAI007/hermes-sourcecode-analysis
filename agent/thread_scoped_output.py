@@ -1,19 +1,5 @@
-"""Thread-scoped stdout/stderr silencing for background worker threads.
-
-``contextlib.redirect_stdout``/``redirect_stderr`` reassign the *process-global*
-``sys.stdout``/``sys.stderr``.  When a daemon worker thread (e.g. the background
-memory/skill review) wraps its whole body in those context managers, every other
-thread in the process — including a gateway's asyncio event-loop thread driving a
-Telegram long-poll — sees ``sys.stdout``/``sys.stderr`` pointing at ``devnull``
-for the full duration.  Any bare ``print`` / ``sys.stderr.write`` from those other
-threads is silently lost during that window (see issue #55769 / #55925).
-
-This module installs a thin proxy as ``sys.stdout``/``sys.stderr`` that routes
-writes per-thread: threads registered as "silenced" go to a sink; every other
-thread passes through to the *original* stream.  The proxy is installed once,
-idempotently, and is never uninstalled (uninstalling would race other threads
-mid-write), so the only observable effect for unregistered threads is one extra
-attribute lookup per write.
+"""
+线程作用域输出 —— 并发场景下的日志隔离。
 """
 
 from __future__ import annotations

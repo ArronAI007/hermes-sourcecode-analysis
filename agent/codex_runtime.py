@@ -1,17 +1,5 @@
-"""Codex API runtime — App Server and Responses-API streaming paths.
-
-Extracted from :class:`AIAgent` to keep the agent loop file focused.
-Each function takes the parent ``AIAgent`` as its first argument
-(``agent``).  AIAgent keeps thin forwarder methods for backward
-compatibility.
-
-* ``run_codex_app_server_turn`` — drives one turn through the
-  ``codex_app_server`` subprocess client (used when a Codex CLI install
-  is the active provider).
-* ``run_codex_stream`` — streams a Codex Responses API call (the
-  ``codex_responses`` api_mode).
-* ``run_codex_create_stream_fallback`` — recovery path when the
-  Responses ``stream=True`` initial create fails.
+"""
+Codex 运行时 —— gpt-5.x 工具调用与响应管理。
 """
 
 from __future__ import annotations

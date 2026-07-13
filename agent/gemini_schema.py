@@ -1,4 +1,6 @@
-"""Helpers for translating OpenAI-style tool schemas to Gemini's schema subset."""
+"""
+Gemini 模式 —— 工具定义到 Gemini 格式的转换。
+"""
 
 from __future__ import annotations
 

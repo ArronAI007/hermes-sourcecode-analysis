@@ -1,14 +1,5 @@
-"""Prompt builders for pet generation.
-
-Two prompt shapes: a *base* prompt (prompt-only, produces the canonical look the
-user picks between) and per-*state* *row* prompts (grounded on the chosen base,
-produce one horizontal strip of N poses). Prompts stay concise and
-sprite-production oriented; the identity lock and "one transparent row" framing
-matter more than flowery description.
-
-We generate the full petdex/Codex nine-state set (see
-:data:`agent.pet.generate.atlas.ROW_SPECS`) so a hatched pet is a valid
-``petdex submit`` spritesheet.
+"""
+宠物提示 —— 图像生成的提示词模板。
 """
 
 from __future__ import annotations

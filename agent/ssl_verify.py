@@ -1,4 +1,6 @@
-"""TLS verify resolution for httpx/OpenAI provider clients."""
+"""
+SSL 验证 —— TLS 连接的额外安全检查。
+"""
 
 from __future__ import annotations
 

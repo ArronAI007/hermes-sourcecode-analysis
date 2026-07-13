@@ -1,10 +1,5 @@
-"""Abstract base for provider transports.
-
-A transport owns the data path for one api_mode:
-  convert_messages → convert_tools → build_kwargs → normalize_response
-
-It does NOT own: client construction, streaming, credential refresh,
-prompt caching, interrupt handling, or retry logic.  Those stay on AIAgent.
+"""
+传输基类 —— 所有提供商适配器的抽象接口。
 """
 
 from abc import ABC, abstractmethod

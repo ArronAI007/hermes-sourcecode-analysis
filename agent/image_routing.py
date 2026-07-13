@@ -1,39 +1,5 @@
-"""Routing helpers for inbound user-attached images.
-
-Two modes:
-
-  native  — attach images as OpenAI-style ``image_url`` content parts on the
-            user turn. Provider adapters (Anthropic, Gemini, Bedrock, Codex,
-            OpenAI chat.completions) already translate these into their
-            vendor-specific multimodal formats.
-
-  text    — run ``vision_analyze`` on each image up-front and prepend the
-            description to the user's text. The model never sees the pixels;
-            it only sees a lossy text summary. This is the pre-existing
-            behaviour and still the right choice for non-vision models.
-
-The decision is made once per message turn by :func:`decide_image_input_mode`.
-It reads ``agent.image_input_mode`` from config.yaml (``auto`` | ``native``
-| ``text``, default ``auto``) and the active model's capability metadata.
-
-In ``auto`` mode:
-  - If the active model reports ``supports_vision=True`` (via config
-    override or models.dev metadata), we attach natively — vision-capable
-    main models should always see the original pixels, even when an
-    auxiliary vision backend is configured. That auxiliary backend then
-    acts as a *fallback* for sessions whose main model can't take images.
-  - Otherwise, if the user has explicitly configured ``auxiliary.vision``
-    (provider/model/base_url not ``auto``/empty), we route through the
-    text pipeline so the auxiliary vision backend can describe the image
-    for the text-only main model.
-  - Otherwise (non-vision model, no explicit override), we fall back to
-    text via the default vision_analyze flow.
-
-This keeps ``vision_analyze`` surfaced as a tool in every session — skills
-and agent flows that chain it (browser screenshots, deeper inspection of
-URL-referenced images, style-gating loops) keep working. The routing only
-affects *how user-attached images on the current turn* are presented to the
-main model.
+"""
+图像路由 —— 视觉模型选择与成本优化。
 """
 
 from __future__ import annotations

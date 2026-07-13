@@ -1,11 +1,7 @@
-"""Format LSP diagnostics for inclusion in tool output.
-
-The model sees a compact, severity-filtered, line-bounded summary of
-diagnostics introduced by the latest edit.  Format matches what
-OpenCode's ``lsp/diagnostic.ts`` and Claude Code's
-``formatDiagnosticsSummary`` produce — ``<diagnostics>`` blocks with
-1-indexed line/column, capped at ``MAX_PER_FILE`` errors.
 """
+LSP 报告器 —— 诊断信息的格式化输出。
+"""
+
 from __future__ import annotations
 
 import html

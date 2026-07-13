@@ -1,9 +1,5 @@
-"""Pet sprite geometry + animation-state taxonomy.
-
-These values are the common petdex/Codex pet geometry. The real ``pet.json``
-usually only carries ``id``/``displayName``/``description``/``spritesheetPath``;
-row taxonomy is inferred from the atlas shape so Hermes can render both legacy
-8-row sheets and current 9-row Codex sheets.
+"""
+宠物常量 —— 状态数值与行为阈值。
 """
 
 from __future__ import annotations

@@ -1,52 +1,5 @@
-"""Coding-context awareness — base Hermes, every interactive surface.
-
-When the user runs Hermes inside a code workspace (CLI, TUI, desktop app, or an
-editor over ACP), Hermes shifts into a **coding posture**. This module is the
-single place that decides whether we're in that posture and what it implies,
-so the rest of the codebase never re-derives "are we coding?" on its own.
-
-Architecture — one seam, many consumers
-----------------------------------------
-The posture is modelled as a frozen :class:`RuntimeMode` selected from a small
-:class:`ContextProfile` registry (today: ``coding`` and ``general``). A profile
-is *data* — it declares the toolset to collapse to, the operating brief to
-inject, and hints for other domains (model routing, memory, subagents). Every
-domain reads the same resolved object instead of probing git/config itself:
-
-  * **System prompt** — ``RuntimeMode.system_blocks()`` → the operating brief +
-    a live git/workspace snapshot (``agent/system_prompt.py``).
-  * **Toolset** — ``RuntimeMode.toolset_selection()`` → the ``coding`` toolset
-    plus the user's enabled MCP servers (``cli.py`` / ``tui_gateway``). Only
-    under the opt-in ``focus`` mode: the default posture is prompt-only and
-    never touches the user's configured toolsets (toolsets like messaging /
-    smart-home / music are off-by-default anyway, and someone who explicitly
-    enabled image-gen or Spotify shouldn't lose it for being in a git repo).
-  * **Delegation** — subagents inherit the parent's toolset and run through the
-    same prompt builder, so the coding posture propagates to children for free.
-  * **Model / memory / compression** — declared on the profile
-    (``model_hint``, ``memory_policy``) as the extension seam; consumers read
-    ``mode.profile`` rather than re-deciding.
-
-Cache safety
-------------
-The mode is resolved **once** and is immutable. The workspace snapshot is built
-once at prompt-build time and baked into the *stable* system-prompt tier — never
-re-probed per turn (that would shatter the prompt cache). Branch and dirty state
-drift mid-session, so the brief tells the model to re-check with ``git`` before
-acting on the snapshot. A ``/coding`` flip therefore only takes effect next
-session (deferred), the same contract as ``/skills install`` vs ``--now``.
-
-Activation (config ``agent.coding_context``):
-
-  * ``auto`` (default) — posture (brief + snapshot) on an interactive coding
-    surface sitting in a code workspace (git repo or recognised project root).
-    Prompt-only; toolsets and the skill index untouched.
-  * ``focus`` — like ``auto``, but additionally collapses the toolset to the
-    ``coding`` set + enabled MCP servers and demotes non-coding skill
-    categories to names-only in the prompt's skill index (no skill is ever
-    hidden). Explicit opt-in for a lean schema.
-  * ``on`` — force the posture anywhere (incl. non-workspaces). Prompt-only.
-  * ``off`` — disable entirely.
+"""
+编码上下文 —— 代码库分析与项目结构理解。
 """
 
 from __future__ import annotations

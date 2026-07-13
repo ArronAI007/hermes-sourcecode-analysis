@@ -1,19 +1,5 @@
-"""Decode a pet spritesheet and encode frames for a terminal.
-
-Shared by the base CLI (writes the escape bytes to its own stdout) and the
-TUI (``tui_gateway`` ships the encoded bytes to Ink, which writes them) so the
-decode + capability-detection + protocol-encoding logic exists exactly once.
-
-Supported output modes, in fidelity order:
-
-- ``kitty``   — the kitty graphics protocol (kitty, Ghostty, WezTerm).
-- ``iterm``   — iTerm2 inline images (iTerm2, WezTerm).
-- ``sixel``   — DEC sixel (xterm -ti vt340, foot, mlterm, WezTerm, …).
-- ``unicode`` — 24-bit half-block downscale; works in any truecolor terminal.
-
-Frame decoding requires Pillow (a core Hermes dependency).  If Pillow or the
-spritesheet is unavailable the renderer degrades to ``unicode`` text or an
-empty string rather than raising.
+"""
+宠物渲染 —— 终端/Canvas 动画帧生成。
 """
 
 from __future__ import annotations

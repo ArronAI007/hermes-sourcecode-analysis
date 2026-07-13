@@ -1,43 +1,5 @@
-"""Shared auxiliary client router for side tasks.
-
-Provides a single resolution chain so every consumer (context compression,
-session search, web extraction, vision analysis, browser vision) picks up
-the best available backend without duplicating fallback logic.
-
-Resolution order for text tasks (auto mode):
-  1. User's main provider + main model (used regardless of provider type —
-     aggregators, direct API-key providers, native Anthropic, Codex, etc.)
-  2. OpenRouter  (OPENROUTER_API_KEY)
-  3. Nous Portal (~/.hermes/auth.json active provider)
-  4. Custom endpoint (config.yaml model.base_url + OPENAI_API_KEY)
-  5. Native Anthropic
-  6. Direct API-key providers (z.ai/GLM, Kimi/Moonshot, MiniMax, MiniMax-CN)
-  7. None
-
-Resolution order for vision/multimodal tasks (auto mode):
-  1. Selected main provider, if it is one of the supported vision backends below
-  2. OpenRouter
-  3. Nous Portal
-  4. Native Anthropic
-  5. Custom endpoint (for local vision models: Qwen-VL, LLaVA, Pixtral, etc.)
-  6. None
-
-Codex OAuth (ChatGPT-account auth) is intentionally NOT in either
-fallback chain: OpenAI gates this endpoint behind an undocumented,
-shifting model allow-list, so "just try Codex with a hardcoded model"
-rots on its own.  Codex is used only when the user's main provider *is*
-openai-codex (Step 1 above) or when a caller explicitly requests it with
-a model (auxiliary.<task>.provider + auxiliary.<task>.model).
-
-Per-task overrides are configured in config.yaml under the ``auxiliary:`` section
-(e.g. ``auxiliary.vision.provider``, ``auxiliary.compression.model``).
-Default "auto" follows the chains above.
-
-Payment / credit exhaustion fallback:
-  When a resolved provider returns HTTP 402 or a credit-related error,
-  call_llm() automatically retries with the next available provider in the
-  auto-detection chain.  This handles the common case where a user depletes
-  their OpenRouter balance but has Codex OAuth or another provider available.
+"""
+辅助客户端 —— 副 LLM 调用（摘要、标题生成、模型元数据）。
 """
 
 import contextlib

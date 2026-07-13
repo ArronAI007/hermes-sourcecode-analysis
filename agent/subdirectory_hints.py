@@ -1,16 +1,5 @@
-"""Progressive subdirectory hint discovery.
-
-As the agent navigates into subdirectories via tool calls (read_file, terminal,
-search_files, etc.), this module discovers and loads project context files
-(AGENTS.md, CLAUDE.md, .cursorrules) from those directories.  Discovered hints
-are appended to the tool result so the model gets relevant context at the moment
-it starts working in a new area of the codebase.
-
-This complements the startup context loading in ``prompt_builder.py`` which only
-loads from the CWD.  Subdirectory hints are discovered lazily and injected into
-the conversation without modifying the system prompt (preserving prompt caching).
-
-Inspired by Block/goose's SubdirectoryHintTracker.
+"""
+子目录提示 —— 大型项目的分块上下文加载。
 """
 
 import logging

@@ -1,57 +1,5 @@
-"""Stateful scrubber for reasoning/thinking blocks in streamed assistant text.
-
-``run_agent._strip_think_blocks`` is regex-based and correct for a complete
-string, but when it runs *per-delta* in ``_fire_stream_delta`` it destroys
-the state that downstream consumers (CLI ``_stream_delta``, gateway
-``GatewayStreamConsumer._filter_and_accumulate``) rely on.
-
-Concretely, when MiniMax-M2.7 streams
-
-    delta1 = "<think>"
-    delta2 = "Let me check their config"
-    delta3 = "</think>"
-
-the per-delta regex erases delta1 entirely (case 2: unterminated-open at
-boundary matches ``^<think>...``), so the downstream state machine never
-sees the open tag, treats delta2 as regular content, and leaks reasoning
-to the user.  Consumers that don't run their own state machine (ACP,
-api_server, TTS) never had any defence at all — they just emitted
-whatever survived the upstream regex.
-
-This module centralises the tag-suppression state machine at the
-upstream layer so every stream_delta_callback sees text that has
-already had reasoning blocks removed.  Partial tags at delta
-boundaries are held back until the next delta resolves them, and
-end-of-stream flushing surfaces any held-back prose that turned out
-not to be a real tag.
-
-Usage::
-
-    scrubber = StreamingThinkScrubber()
-    for delta in stream:
-        visible = scrubber.feed(delta)
-        if visible:
-            emit(visible)
-    tail = scrubber.flush()  # at end of stream
-    if tail:
-        emit(tail)
-
-The scrubber is re-entrant per agent instance.  Call ``reset()`` at
-the top of each new turn so a hung block from an interrupted prior
-stream cannot taint the next turn's output.
-
-Tag variants handled (case-insensitive):
-  ``<think>``, ``<thinking>``, ``<reasoning>``, ``<thought>``,
-  ``<REASONING_SCRATCHPAD>``.
-
-Block-boundary rule for opens: an opening tag is only treated as a
-reasoning-block opener when it appears at the start of the stream,
-after a newline (optionally followed by whitespace), or when only
-whitespace has been emitted on the current line.  This prevents prose
-that *mentions* the tag name (e.g. ``"use <think> tags here"``) from
-being incorrectly suppressed.  Closed pairs (``<think>X</think>``) are
-always suppressed regardless of boundary; a closed pair is an
-intentional, bounded construct.
+"""
+思维清理器 —— 流式推理标签的状态机过滤。
 """
 
 from __future__ import annotations

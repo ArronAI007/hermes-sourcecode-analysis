@@ -1,8 +1,5 @@
-"""Lightweight skill metadata utilities shared by prompt_builder and skills_tool.
-
-This module intentionally avoids importing the tool registry, CLI config, or any
-heavy dependency chain.  It is safe to import at module level without triggering
-tool registration or provider resolution.
+"""
+技能工具 —— 技能文件的通用解析与操作。
 """
 
 import logging

@@ -1,11 +1,5 @@
-"""Shared types for normalized provider responses.
-
-These dataclasses define the canonical shape that all provider adapters
-normalize responses to.  The shared surface is intentionally minimal —
-only fields that every downstream consumer reads are top-level.
-Protocol-specific state goes in ``provider_data`` dicts (response-level
-and per-tool-call) so that protocol-aware code paths can access it
-without polluting the shared type.
+"""
+传输类型 —— 共享的数据结构与枚举定义。
 """
 
 from __future__ import annotations

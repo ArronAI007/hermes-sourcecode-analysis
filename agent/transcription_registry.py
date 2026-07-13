@@ -1,20 +1,5 @@
 """
-Transcription Provider Registry
-================================
-
-Central map of registered STT providers. Populated by plugins at
-import-time via :meth:`PluginContext.register_transcription_provider`;
-consumed by :mod:`tools.transcription_tools` to dispatch
-:func:`transcribe_audio` calls to the active plugin backend **when**
-the configured ``stt.provider`` name is not a built-in.
-
-Built-ins-always-win
---------------------
-Plugin names that collide with a built-in STT provider (``local``,
-``local_command``, ``groq``, ``openai``, ``mistral``, ``xai``) are
-rejected at registration with a warning. This invariant is also
-re-checked at dispatch time in
-:func:`tools.transcription_tools._dispatch_to_plugin_provider`.
+转录注册表 ——  Whisper/Deepgram 等服务的发现。
 """
 
 from __future__ import annotations

@@ -1,16 +1,5 @@
-"""Map agent activity → a :class:`PetState`.
-
-This is the one place the "what is the agent doing right now?" → "which
-animation row?" decision lives.  Each surface feeds it the signals it already
-tracks:
-
-- CLI    — ``KawaiiSpinner`` waiting/thinking state + tool outcomes.
-- TUI    — gateway ``tool.start/complete`` + ``message.delta/complete`` events.
-- Desktop — the ``$busy``/``$awaitingResponse``/tool-event nanostores
-            (re-implemented in TS, but mirroring this priority order).
-
-Keeping the priority order here (and documenting it) lets the TypeScript
-mirror stay faithful without a second design.
+"""
+宠物状态 —— 情绪、饥饿度与成长持久化。
 """
 
 from __future__ import annotations

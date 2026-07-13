@@ -1,24 +1,5 @@
-"""Shared one-off LLM requests for non-conversational helpers.
-
-A "one-shot" is a single, stateless model call that runs *outside* any
-conversation: it never touches a session's history, never breaks prompt
-caching, and returns plain text. UI surfaces use it for small generative
-chores — a commit message from a diff, a rename suggestion, a summary —
-where spinning up an agent turn would be wrong (it would pollute the thread)
-and hand-rolling an LLM call at every call site would be worse.
-
-Two ways to call it:
-
-  * ``run_oneshot(instructions=..., user_input=...)`` — caller supplies the
-    full prompt.
-  * ``run_oneshot(template="commit_message", variables={...})`` — caller
-    names a registered template and passes its variables; the template owns
-    the prompt engineering so it stays consistent across CLI/TUI/desktop.
-
-Model selection rides the same auxiliary plumbing as title generation
-(:func:`agent.auxiliary_client.call_llm`): pass ``main_runtime`` to inherit
-the live session's provider/model, otherwise the configured ``task`` (default
-``title_generation``) resolves a cheap/fast backend.
+"""
+单次模式 —— 非交互式的一次性任务执行。
 """
 
 import logging

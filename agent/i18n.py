@@ -1,31 +1,5 @@
-"""Lightweight internationalization (i18n) for Hermes static user-facing messages.
-
-Scope (thin slice, by design): only the highest-impact static strings shown
-to the user by Hermes itself -- approval prompts, a handful of gateway slash
-command replies, restart-drain notices.  Agent-generated output, log lines,
-error tracebacks, tool outputs, and slash-command descriptions all stay in
-English.
-
-Catalog files live under ``locales/<lang>.yaml`` at the repo root.  Each
-catalog is a flat dict keyed by dotted paths (e.g. ``approval.choose`` or
-``gateway.approval_expired``).  Missing keys fall back to English; if English
-is missing too, the key path itself is returned so a broken catalog never
-crashes the agent.
-
-Usage::
-
-    from agent.i18n import t
-    print(t("approval.choose_long"))                       # current lang
-    print(t("gateway.draining", count=3))                  # {count} formatted
-    print(t("approval.choose_long", lang="zh"))            # explicit override
-
-Language resolution order:
-    1. Explicit ``lang=`` argument passed to :func:`t`
-    2. ``HERMES_LANGUAGE`` environment variable (for tests / quick override)
-    3. ``display.language`` from config.yaml
-    4. ``"en"`` (baseline)
-
-Supported languages: en, zh, ja, de, es, fr, tr, uk.  Unknown values fall back to en.
+"""
+国际化 —— 多语言提示模板与区域设置。
 """
 
 from __future__ import annotations

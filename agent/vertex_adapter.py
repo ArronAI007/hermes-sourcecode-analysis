@@ -1,19 +1,5 @@
-"""Vertex AI (Google Cloud) adapter for Hermes Agent.
-
-Provides authentication and configuration for Vertex AI's OpenAI-compatible
-endpoint. This allows Hermes to use Gemini models via Google Cloud with
-enterprise-grade rate limits and quotas.
-
-Requires: pip install google-auth
-
-Environment variables honored (all optional):
-  GOOGLE_APPLICATION_CREDENTIALS — path to a service account JSON file (secret).
-  VERTEX_CREDENTIALS_PATH        — alias, takes precedence if set (secret).
-  VERTEX_PROJECT_ID              — override the project_id embedded in creds.
-  VERTEX_REGION                  — override default region ("global" unless set).
-
-Non-secret routing settings (project_id, region) also live in config.yaml
-under the ``vertex:`` section; env vars take precedence over config.yaml.
+"""
+Vertex 适配器 —— Google Cloud AI 平台集成。
 """
 
 import logging

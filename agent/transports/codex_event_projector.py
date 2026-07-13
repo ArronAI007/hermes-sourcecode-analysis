@@ -1,29 +1,5 @@
-"""Projects codex app-server events into Hermes' messages list.
-
-The translator that lets Hermes' memory/skill review keep working under the
-Codex runtime: it converts Codex `item/*` notifications into the standard
-OpenAI-shaped `{role, content, tool_calls, tool_call_id}` entries that
-`agent/curator.py` already knows how to read.
-
-Codex emits items with a discriminator field `type`:
-  - userMessage         → {role: "user", content}
-  - agentMessage        → {role: "assistant", content}
-  - reasoning           → stashed in the assistant's "reasoning" field
-  - commandExecution    → assistant tool_call(name="exec") + tool result
-  - fileChange          → assistant tool_call(name="apply_patch") + tool result
-  - mcpToolCall         → assistant tool_call(name=f"mcp.{server}.{tool}") + tool result
-  - dynamicToolCall     → assistant tool_call(name=tool) + tool result
-  - plan/hookPrompt/collabAgentToolCall → recorded as opaque assistant notes
-
-Each item maps to AT MOST one assistant entry + one tool entry, preserving
-Hermes' message-alternation invariants (system → user → assistant → user/tool
-→ assistant → ...). Multiple Codex tool calls within one Codex turn produce
-multiple consecutive (assistant, tool) pairs, which is the same shape Hermes
-already produces for parallel tool calls.
-
-Counters tracked alongside projection:
-  - tool_iterations: ticks once per completed tool-shaped item. Used by
-    AIAgent._iters_since_skill (skill nudge gate, default threshold 10).
+"""
+Codex 事件投影 —— 流式事件的语义转换。
 """
 
 from __future__ import annotations

@@ -1,8 +1,5 @@
-"""Trajectory saving utilities and static helpers.
-
-_convert_to_trajectory_format stays as an AIAgent method (batch_runner.py
-calls agent._convert_to_trajectory_format). Only the static helpers and
-the file-write logic live here.
+"""
+轨迹 —— 对话历史的结构化存储与回放格式。
 """
 
 import json

@@ -1,8 +1,5 @@
-"""OpenAI Responses API (Codex) transport.
-
-Delegates to the existing adapter functions in agent/codex_responses_adapter.py.
-This transport owns format conversion and normalization — NOT client lifecycle,
-streaming, or the _run_codex_stream() call path.
+"""
+Codex 传输 —— Responses API 的流式实现。
 """
 
 import hashlib

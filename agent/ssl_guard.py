@@ -1,7 +1,5 @@
-"""Preventive SSL CA certificate checks for Hermes Agent.
-
-This module catches broken CA bundle paths before OpenAI/httpx turns them into
-opaque ``FileNotFoundError: [Errno 2] No such file or directory`` failures.
+"""
+SSL 守卫 —— 证书验证与自定义 CA Bundle 管理。
 """
 
 from __future__ import annotations

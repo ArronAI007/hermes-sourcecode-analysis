@@ -1,16 +1,5 @@
-"""Assemble the "learning made visible" graph for desktop.
-
-This graph is intentionally scoped to what a user actually learns over time:
-- non-base, learned/profile skills (agent-created or used),
-- memory chunks from ``MEMORY.md`` / ``USER.md`` as first-class nodes.
-
-Skill links come from declared ``related_skills``. Memory-to-skill links are
-derived from lexical overlap so the graph can answer "which learned skills are
-connected to the things I remember?".
-
-Run as a module to print edge-density stats against real data:
-
-    python -m agent.learning_graph
+"""
+学习图谱 —— 技能依赖与演进的有向图。
 """
 
 from __future__ import annotations

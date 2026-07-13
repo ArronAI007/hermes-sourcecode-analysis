@@ -1,30 +1,5 @@
-"""CJK/wide-character-aware re-alignment of model-emitted markdown tables.
-
-Models pad markdown tables assuming each character occupies one terminal
-cell. CJK glyphs and most emoji render as two cells, so the model's
-spacing collapses into drift the moment a table reaches a real terminal —
-header pipes line up, every body row drifts right by N cells per CJK
-char.
-
-This module rebuilds row padding using ``wcwidth.wcswidth`` (display
-columns), preserving the table's pipes and dashes so it still reads as a
-plain-text table in ``strip`` / unrendered display modes. Standard Rich
-markdown rendering already aligns CJK correctly inside a wide enough
-panel; this helper is for the paths that print the model's text more or
-less verbatim.
-
-The helper is deliberately conservative:
-
-* Only contiguous ``| ... |`` blocks with a divider line are rewritten.
-* Anything that does not look like a table is passed through unchanged.
-* Single-line / mid-stream fragments are left alone — callers buffer
-  table rows and flush them once the block is complete.
-
-There is a small, intentional caveat: ``wcwidth`` returns ``-1`` for some
-emoji-with-variation-selector sequences (e.g. ``⚠️``); we clamp those to
-0 so they do not corrupt the column width math. The 1-cell drift on
-those specific glyphs is preferable to silently widening every table
-that contains one.
+"""
+Markdown 表格 —— 表格数据的解析与格式化。
 """
 
 from __future__ import annotations

@@ -1,13 +1,5 @@
 """
-Contextual first-touch onboarding hints.
-
-Instead of blocking first-run questionnaires, show a one-time hint the *first*
-time a user hits a behavior fork — message-while-running, first long-running
-tool, etc.  Each hint is shown once per install (tracked in ``config.yaml`` under
-``onboarding.seen.<flag>``) and then never again.
-
-Keep this module tiny and dependency-free so both the CLI and gateway can import
-it without pulling in heavy modules.
+引导流程 —— 新用户的首次配置与教程。
 """
 
 from __future__ import annotations

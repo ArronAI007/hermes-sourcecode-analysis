@@ -1,23 +1,5 @@
-"""Assorted AIAgent runtime helpers — moved out of run_agent.py for clarity.
-
-Each function takes the parent ``AIAgent`` as its first argument
-(``agent``) except for the static helpers (``sanitize_tool_call_arguments``,
-``drop_thinking_only_and_merge_users``) which are stateless.  AIAgent
-keeps thin forwarders for backward compatibility.
-
-Methods covered:
-* ``convert_to_trajectory_format`` — internal -> trajectory-file format
-* ``sanitize_tool_call_arguments`` — repair corrupted JSON in tool_calls
-* ``repair_message_sequence`` — enforce alternation invariants
-* ``strip_think_blocks`` — remove inline reasoning from stored content
-* ``recover_with_credential_pool`` — rotate pool entries on 429
-* ``try_recover_primary_transport`` — re-create OpenAI client after rate-limit
-* ``drop_thinking_only_and_merge_users`` — Anthropic-style cleanup
-* ``restore_primary_runtime`` — un-do fallback activation
-* ``extract_reasoning`` — pull reasoning fields out of API responses
-* ``dump_api_request_debug`` — write request body for post-mortem
-* ``anthropic_prompt_cache_policy`` — compute cache_control breakpoints
-* ``create_openai_client`` — build the per-agent OpenAI SDK client
+"""
+运行时辅助函数 —— 消息修复、工具调用清理、凭证恢复等。
 """
 
 from __future__ import annotations

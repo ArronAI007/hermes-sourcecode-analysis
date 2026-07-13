@@ -1,46 +1,5 @@
-"""Unified removal contract for every credential source Hermes reads from.
-
-Hermes seeds its credential pool from many places:
-
-    env:<VAR>     — os.environ / ~/.hermes/.env
-    claude_code   — ~/.claude/.credentials.json
-    hermes_pkce   — ~/.hermes/.anthropic_oauth.json
-    device_code   — auth.json providers.<provider> (nous, openai-codex, ...)
-    qwen-cli      — ~/.qwen/oauth_creds.json
-    gh_cli        — gh auth token
-    config:<name> — custom_providers config entry
-    model_config  — model.api_key when model.provider == "custom"
-    manual        — user ran `hermes auth add`
-
-Each source has its own reader inside ``agent.credential_pool._seed_from_*``
-(which keep their existing shape — we haven't restructured them).  What we
-unify here is **removal**:
-
-    ``hermes auth remove <provider> <N>`` must make the pool entry stay gone.
-
-Before this module, every source had an ad-hoc removal branch in
-``auth_remove_command``, and several sources had no branch at all — so
-``auth remove`` silently reverted on the next ``load_pool()`` call for
-qwen-cli, nous device_code (partial), hermes_pkce, copilot gh_cli, and
-custom-config sources.
-
-Now every source registers a ``RemovalStep`` that does exactly three things
-in the same shape:
-
-    1. Clean up whatever externally-readable state the source reads from
-       (.env line, auth.json block, OAuth file, etc.)
-    2. Suppress the ``(provider, source_id)`` in auth.json so the
-       corresponding ``_seed_from_*`` branch skips the upsert on re-load
-    3. Return ``RemovalResult`` describing what was cleaned and any
-       diagnostic hints the user should see (shell-exported env vars,
-       external credential files we deliberately don't delete, etc.)
-
-Adding a new credential source is:
-    - wire up a reader branch in ``_seed_from_*`` (existing pattern)
-    - gate that reader behind ``is_source_suppressed(provider, source_id)``
-    - register a ``RemovalStep`` here
-
-No more per-source if/elif chain in ``auth_remove_command``.
+"""
+凭证来源 —— 环境变量、文件、密钥链的解析优先级。
 """
 
 from __future__ import annotations

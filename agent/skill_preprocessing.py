@@ -1,4 +1,6 @@
-"""Shared SKILL.md preprocessing helpers."""
+"""
+技能预处理 —— 技能加载前的模板渲染与验证。
+"""
 
 import logging
 import re

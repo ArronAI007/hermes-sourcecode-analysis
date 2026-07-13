@@ -1,52 +1,5 @@
 """
-Web Search Provider ABC
-=======================
-
-Defines the pluggable-backend interface for web search and content extraction.
-Providers register instances via ``PluginContext.register_web_search_provider()``;
-the active one (selected via ``web.search_backend`` / ``web.extract_backend`` /
-``web.backend`` in ``config.yaml``) services every ``web_search`` /
-``web_extract`` tool call.
-
-Providers live in ``<repo>/plugins/web/<name>/`` (built-in, auto-loaded as
-``kind: backend``) or ``~/.hermes/plugins/web/<name>/`` (user, opt-in via
-``plugins.enabled``).
-
-This ABC is the SINGLE plugin-facing surface for web providers — every
-provider in the tree (brave-free, ddgs, searxng, exa, parallel, tavily,
-firecrawl) implements it. The legacy in-tree ``tools.web_providers.base``
-ABCs were deleted in PR #25182 along with the per-vendor inline helpers
-in ``tools/web_tools.py``; the response-shape contract documented below
-is preserved bit-for-bit so the tool wrapper does not have to translate.
-
-Response shape (preserved from the legacy contract):
-
-Search results::
-
-    {
-        "success": True,
-        "data": {
-            "web": [
-                {"title": str, "url": str, "description": str, "position": int},
-                ...
-            ]
-        }
-    }
-
-Extract results::
-
-    {
-        "success": True,
-        "data": [
-            {"url": str, "title": str, "content": str,
-             "raw_content": str, "metadata": dict},
-            ...
-        ]
-    }
-
-On failure (either capability)::
-
-    {"success": False, "error": str}
+网页搜索提供商 —— 搜索引擎的抽象接口。
 """
 
 from __future__ import annotations

@@ -1,17 +1,7 @@
-"""``hermes lsp`` CLI subcommand.
-
-Subcommands:
-
-- ``status`` — show service state, configured servers, install status.
-- ``install <server_id>`` — eagerly install one server's binary.
-- ``install-all`` — try to install every server with a known recipe.
-- ``restart`` — tear down running clients so the next edit re-spawns.
-- ``which <server_id>`` — print the resolved binary path for one server.
-- ``list`` — print the registry of supported servers.
-
-The handlers are kept here (rather than in
-``hermes_cli/main.py``) so the LSP module ships self-contained.
 """
+LSP CLI —— 语言服务器的命令行控制。
+"""
+
 from __future__ import annotations
 
 import argparse

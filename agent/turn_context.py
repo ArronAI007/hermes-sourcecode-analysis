@@ -1,23 +1,5 @@
-"""Per-turn setup for ``run_conversation`` (the turn prologue).
-
-``run_conversation`` opened with ~470 lines of straight-line setup before the
-tool-calling loop ever started: stdio guarding, runtime-main wiring, retry-counter
-resets, user-message sanitization, todo/nudge-counter hydration, system-prompt
-restore-or-build, crash-resilience persistence, preflight context compression, the
-``pre_llm_call`` plugin hook, and external-memory prefetch.
-
-All of that is *prologue* — it runs once per turn, has no back-references into the
-loop, and produces a fixed set of values the loop then consumes. ``TurnContext``
-captures those produced values; ``build_turn_context`` performs the setup work and
-returns one. ``run_conversation`` is left to unpack the context and run the loop,
-shrinking the orchestrator by the full prologue.
-
-The builder still mutates ``agent`` heavily (counters, thread id, cached prompt,
-session DB) exactly as the inline code did — those side effects are the point. The
-``TurnContext`` it returns carries only the *locals* the loop reads back.
-
-Behavior is identical to the original inline prologue; this is a pure
-move-and-name refactor with no semantic change.
+"""
+回合上下文 —— 单轮对话的状态快照。
 """
 
 from __future__ import annotations

@@ -1,42 +1,5 @@
 """
-Image Generation Provider ABC
-=============================
-
-Defines the pluggable-backend interface for image generation. Providers register
-instances via ``PluginContext.register_image_gen_provider()``; the active one
-(selected via ``image_gen.provider`` in ``config.yaml``) services every
-``image_generate`` tool call.
-
-Providers live in ``<repo>/plugins/image_gen/<name>/`` (built-in, auto-loaded
-as ``kind: backend``) or ``~/.hermes/plugins/image_gen/<name>/`` (user, opt-in
-via ``plugins.enabled``).
-
-Unified surface
----------------
-One tool — ``image_generate`` — covers **text-to-image** and
-**image-to-image / image editing**. The router is the presence of
-``image_url`` (and/or ``reference_image_urls``): if any source image is
-provided, the provider routes to its image-to-image / edit endpoint; if
-omitted, the provider routes to text-to-image. Users pick one **model**
-(e.g. nano-banana-pro, gpt-image-2, grok-imagine-image); the provider
-handles which underlying endpoint to hit. This mirrors the ``video_gen``
-provider design (``agent/video_gen_provider.py``) so the two surfaces
-stay learnable together.
-
-Response shape
---------------
-All providers return a dict that :func:`success_response` / :func:`error_response`
-produce. The tool wrapper JSON-serializes it. Keys:
-
-    success        bool
-    image          str | None       URL or absolute file path
-    model          str              provider-specific model identifier
-    prompt         str              echoed prompt
-    aspect_ratio   str              "landscape" | "square" | "portrait"
-    modality       str              "text" | "image" (which mode was used)
-    provider       str              provider name (for diagnostics)
-    error          str              only when success=False
-    error_type     str              only when success=False
+图像生成提供商 —— DALL-E/Midjourney/Stable Diffusion 抽象。
 """
 
 from __future__ import annotations

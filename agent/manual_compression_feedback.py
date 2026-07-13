@@ -1,4 +1,6 @@
-"""User-facing summaries for manual compression commands."""
+"""
+手动压缩反馈 —— 用户触发的上下文精简交互。
+"""
 
 from __future__ import annotations
 

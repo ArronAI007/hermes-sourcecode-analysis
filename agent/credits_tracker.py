@@ -1,33 +1,5 @@
-"""Credits tracking for Nous inference API responses.
-
-Parses x-nous-credits-* (and optional x-nous-tool-pool-*) headers from
-inference responses into a validated CreditsState dataclass.  Provides
-depletion detection (paid_access), subscription-cap used_fraction, and
-warn-once schema-version gating.  This is the hardened parser used by all
-live consumers (run_agent, tui_gateway) — not a dev-only shim.
-
-Header schema (x-nous-credits-* family):
-    x-nous-credits-version                    contract/schema version
-    x-nous-credits-remaining-micros           total remaining balance (micros)
-    x-nous-credits-remaining-usd              same, formatted USD string
-    x-nous-credits-subscription-micros        subscription balance (SIGNED; may be negative/debt)
-    x-nous-credits-subscription-usd           same, formatted USD string
-    x-nous-credits-subscription-limit-micros  subscription cap (PAIRED/optional)
-    x-nous-credits-subscription-limit-usd     same, formatted USD string (PAIRED/optional)
-    x-nous-credits-rollover-micros            rolled-over balance (micros)
-    x-nous-credits-purchased-micros           purchased balance (micros)
-    x-nous-credits-purchased-usd              same, formatted USD string
-    x-nous-credits-denominator-kind           "subscription_cap" | "none"
-    x-nous-credits-paid-access                "true" | "false" (STRING!)
-    x-nous-credits-disabled-reason            reason string (header omitted when null)
-    x-nous-credits-as-of-ms                   server-side timestamp (ms epoch)
-
-Tool-pool headers use a SEPARATE prefix:
-    x-nous-tool-pool-micros                   tool-pool balance (micros)
-    x-nous-tool-pool-gated-off                "true" | "false" (STRING!)
-
-Money is handled as micros ints only; *_usd values are preserved verbatim as
-the raw strings the server sent (never re-parsed to float).
+"""
+积分追踪器 —— Nous 平台微积分消耗监控。
 """
 
 from __future__ import annotations

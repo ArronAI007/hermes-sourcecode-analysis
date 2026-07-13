@@ -1,12 +1,5 @@
-"""Per-agent iteration budget — thread-safe consume/refund counter.
-
-Extracted from ``run_agent.py``.  Each ``AIAgent`` instance (parent or
-subagent) holds an :class:`IterationBudget`; the parent's cap comes from
-``max_iterations`` (default 90), each subagent's cap comes from
-``delegation.max_iterations`` (default 50).
-
-``run_agent`` re-exports ``IterationBudget`` so existing
-``from run_agent import IterationBudget`` imports keep working unchanged.
+"""
+迭代预算 —— 工具调用次数的配额与预警。
 """
 
 from __future__ import annotations

@@ -1,11 +1,5 @@
-"""Anthropic prompt caching strategy.
-
-Single layout: ``system_and_3``. 4 cache_control breakpoints — system
-prompt + last 3 non-system messages, all at the same TTL (5m or 1h).
-Reduces input token costs by ~75% on multi-turn conversations within a
-single session.
-
-Pure functions -- no class state, no AIAgent dependency.
+"""
+提示缓存 —— Anthropic 缓存控制断点的策略计算。
 """
 
 import copy

@@ -1,19 +1,5 @@
-"""Background memory/skill review — fork the agent to evaluate the turn.
-
-After every turn, ``AIAgent.run_conversation`` may call
-:func:`spawn_background_review` to fire off a daemon thread that replays
-the conversation snapshot in a forked :class:`AIAgent` and asks itself
-"should any skill/memory be saved or updated?".  Writes go straight to
-the memory + skill stores.  Main conversation and prompt cache are never
-touched.
-
-The fork inherits the parent's live runtime (provider, model, base_url,
-credentials, cached system prompt) so it hits the same prefix cache and
-uses the same auth.  It runs with a tool whitelist limited to memory and
-skill management tools; everything else is denied at runtime.
-
-See the ``hermes-agent-dev`` skill (``references/self-improvement-loop.md``)
-for invariants and PR review criteria.
+"""
+后台审查 —— 技能/记忆的异步评估与优化建议。
 """
 
 from __future__ import annotations

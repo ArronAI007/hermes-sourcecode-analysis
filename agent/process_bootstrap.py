@@ -1,24 +1,5 @@
-"""Process-level bootstrap helpers for ``run_agent``.
-
-Three concerns, all tied to ``AIAgent`` boot-time / runtime IO setup:
-
-1. **Lazy OpenAI SDK import** — ``_load_openai_cls`` + ``_OpenAIProxy``
-   defer the 240ms-ish ``from openai import OpenAI`` cost until first use,
-   while preserving ``isinstance(client, OpenAI)`` checks and
-   ``patch("run_agent.OpenAI", ...)`` test patterns.
-
-2. **Crash-resistant stdio** — ``_SafeWriter`` wraps stdout/stderr so
-   ``OSError: Input/output error`` from broken pipes (systemd, Docker,
-   thread teardown races) cannot crash the agent.  ``_install_safe_stdio``
-   applies the wrapper.
-
-3. **HTTP proxy resolution** — ``_get_proxy_from_env`` reads
-   ``HTTPS_PROXY`` / ``HTTP_PROXY`` / ``ALL_PROXY``;
-   ``_get_proxy_for_base_url`` respects ``NO_PROXY`` for the given base URL.
-
-``run_agent`` re-exports every name so existing
-``from run_agent import _get_proxy_from_env`` imports keep working
-unchanged.
+"""
+进程引导 —— 子进程的安全标准输入输出设置。
 """
 
 from __future__ import annotations

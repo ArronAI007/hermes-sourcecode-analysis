@@ -1,25 +1,5 @@
-"""Tool-dispatch helpers — parallelism gating, multimodal envelopes, mutation tracking.
-
-Pure module-level utilities extracted from ``run_agent.py``:
-
-* ``_is_destructive_command`` — terminal-command heuristic used to gate
-  parallel batch dispatch.
-* ``_should_parallelize_tool_batch`` / ``_extract_parallel_scope_path`` /
-  ``_paths_overlap`` — the rules engine deciding when a multi-tool batch
-  can run concurrently.
-* ``_is_multimodal_tool_result`` / ``_multimodal_text_summary`` /
-  ``_append_subdir_hint_to_multimodal`` — envelope helpers for the
-  ``{"_multimodal": True, "content": [...], "text_summary": ...}`` dict
-  shape returned by tools like ``computer_use``.
-* ``_extract_file_mutation_targets`` / ``_extract_landed_file_mutation_paths`` /
-  ``_extract_error_preview`` —
-  per-turn file-mutation verifier inputs.
-* ``_trajectory_normalize_msg`` — strip image blobs from a message for
-  trajectory saving.
-
-All helpers are stateless.  ``run_agent`` re-exports each name so existing
-``from run_agent import ...`` imports in tests and other modules keep
-working unchanged.
+"""
+工具调度辅助 —— 工具调用的标准化消息构造。
 """
 
 from __future__ import annotations

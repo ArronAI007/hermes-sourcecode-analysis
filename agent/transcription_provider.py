@@ -1,47 +1,5 @@
 """
-Transcription Provider ABC
-==========================
-
-Defines the pluggable-backend interface for speech-to-text. Providers
-register instances via
-:meth:`PluginContext.register_transcription_provider`; the active one
-(selected via ``stt.provider`` in ``config.yaml``) services every
-:func:`tools.transcription_tools.transcribe_audio` call **when the
-configured name is neither a built-in (``local``, ``local_command``,
-``groq``, ``openai``, ``mistral``, ``xai``) nor disabled**.
-
-Two coexisting STT extension surfaces — in resolution order:
-
-1. **Built-in providers** (``BUILTIN_STT_PROVIDERS`` in
-   :mod:`tools.transcription_tools`) — native Python implementations
-   for the 6 backends shipped today (faster-whisper, local_command,
-   Groq, OpenAI, Mistral, xAI). **Always win** — plugins cannot
-   shadow them. The single-env-var shell escape hatch
-   ``HERMES_LOCAL_STT_COMMAND`` is preserved via the built-in
-   ``local_command`` path.
-2. **Plugin-registered providers** (this ABC). For new STT backends —
-   OpenRouter, SenseAudio, Gemini-STT, custom proprietary engines —
-   that need a Python implementation without modifying
-   ``tools/transcription_tools.py``.
-
-Built-ins-always-win is enforced at registration time
-(:func:`agent.transcription_registry.register_provider` rejects names
-in ``BUILTIN_STT_PROVIDERS`` with a warning) AND at dispatch time
-(:func:`tools.transcription_tools._dispatch_to_plugin_provider`
-re-checks defensively).
-
-Providers live in ``<repo>/plugins/transcription/<name>/`` (built-in
-plugins, none shipped today) or
-``~/.hermes/plugins/transcription/<name>/`` (user-installed).
-
-Response contract
------------------
-:meth:`TranscriptionProvider.transcribe` returns a dict with keys::
-
-    success      bool
-    transcript   str       transcribed text (empty when success=False)
-    provider     str       provider name (for diagnostics)
-    error        str       only when success=False
+转录提供商 —— 语音到文本的抽象接口。
 """
 
 from __future__ import annotations

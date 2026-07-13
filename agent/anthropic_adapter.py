@@ -1,13 +1,5 @@
-"""Anthropic Messages API adapter for Hermes Agent.
-
-Translates between Hermes's internal OpenAI-style message format and
-Anthropic's Messages API. Follows the same pattern as the codex_responses
-adapter — all provider-specific logic is isolated here.
-
-Auth supports:
-  - Regular API keys (sk-ant-api*) → x-api-key header
-  - OAuth setup-tokens (sk-ant-oat*) → Bearer auth + beta header
-  - Claude Code credentials (~/.claude.json or ~/.claude/.credentials.json) → Bearer auth
+"""
+Anthropic 适配器 —— Claude API 客户端构建与认证。
 """
 
 import copy

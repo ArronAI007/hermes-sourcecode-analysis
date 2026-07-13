@@ -1,23 +1,5 @@
-"""Full MoA turn trace persistence (opt-in via config ``moa.save_traces``).
-
-When enabled, every Mixture-of-Agents turn that actually runs the reference
-fan-out (a cache MISS in ``MoAChatCompletions.create``) appends one JSON line
-to ``<hermes_home>/moa-traces/<session_id>.jsonl``. The record is the TRUE
-FULL turn — the exact messages array each reference model received (system
-prompt + advisory view, not the truncated display preview), each reference's
-full output, and the exact messages array the aggregator received (including
-the injected reference-context guidance block) plus its output when available
-— so a run can be audited end-to-end offline: what every model saw, what every
-model said, and what it cost.
-
-This is a side-channel trace. It is NOT the conversation ``messages`` table and
-never enters message history or replay — MoA references are advisory side-calls
-with their own system prompt, not conversation turns, so persisting them as
-message rows would corrupt role alternation / replay. Traces live in their own
-files, keyed by session id, and are safe to delete.
-
-Cost model note: gated OFF by default. When off, the only overhead is the
-``_traces_enabled()`` config read (cheap) — no file I/O, no serialization.
+"""
+MoA 追踪 —— 多代理推理过程的可视化与调试。
 """
 
 from __future__ import annotations

@@ -1,9 +1,5 @@
-"""Transport layer types and registry for provider response normalization.
-
-Usage:
-    from agent.transports import get_transport
-    transport = get_transport("anthropic_messages")
-    result = transport.normalize_response(raw_response)
+"""
+传输层 —— LLM 提供商通信协议的统一入口。
 """
 
 from agent.transports.types import (

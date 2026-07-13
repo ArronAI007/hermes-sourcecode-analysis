@@ -1,23 +1,5 @@
-"""Rate limit tracking for inference API responses.
-
-Captures x-ratelimit-* headers from provider responses and provides
-formatted display for the /usage slash command.  Currently supports
-the Nous Portal header format (also used by OpenRouter and OpenAI-compatible
-APIs that follow the same convention).
-
-Header schema (12 headers total):
-    x-ratelimit-limit-requests          RPM cap
-    x-ratelimit-limit-requests-1h       RPH cap
-    x-ratelimit-limit-tokens            TPM cap
-    x-ratelimit-limit-tokens-1h         TPH cap
-    x-ratelimit-remaining-requests      requests left in minute window
-    x-ratelimit-remaining-requests-1h   requests left in hour window
-    x-ratelimit-remaining-tokens        tokens left in minute window
-    x-ratelimit-remaining-tokens-1h     tokens left in hour window
-    x-ratelimit-reset-requests          seconds until minute request window resets
-    x-ratelimit-reset-requests-1h       seconds until hour request window resets
-    x-ratelimit-reset-tokens            seconds until minute token window resets
-    x-ratelimit-reset-tokens-1h         seconds until hour token window resets
+"""
+速率限制追踪 —— 头部解析与自适应退避。
 """
 
 from __future__ import annotations

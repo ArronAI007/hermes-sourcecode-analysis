@@ -1,8 +1,5 @@
-"""Coding verification evidence ledger.
-
-This module records what the agent actually proved while working in a code
-workspace. It is deliberately passive: it never decides to run a suite, never
-blocks completion, and never upgrades targeted checks into "repo green".
+"""
+验证证据 —— 工具执行结果的审计追踪。
 """
 
 from __future__ import annotations

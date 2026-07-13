@@ -1,30 +1,5 @@
-"""Bitwarden Secrets Manager (`bws` CLI) integration.
-
-Hermes pulls API keys from Bitwarden Secrets Manager at process startup
-so they don't have to live in plaintext in ``~/.hermes/.env``.
-
-Design summary
---------------
-
-* The ``bws`` binary is auto-installed into ``<hermes_home>/bin/bws`` on
-  first use.  Hermes pins one version (``_BWS_VERSION``) and downloads
-  the matching asset from the official GitHub Releases page, verifying
-  the SHA-256 against the release's published checksum file.
-* The access token is stored in ``~/.hermes/.env`` as
-  ``BWS_ACCESS_TOKEN`` (or whatever name the user picked in
-  ``secrets.bitwarden.access_token_env``).  This is the one
-  bootstrap secret — every other provider key can live in Bitwarden.
-* Pulling secrets is a single ``bws secret list <project_id>
-  --output json`` call.  We cache the result in-process for
-  ``cache_ttl_seconds`` so back-to-back ``hermes`` invocations don't
-  hammer the API.
-* Failures NEVER block Hermes startup.  Missing binary, no network,
-  expired token, etc. all emit a one-line warning and continue with
-  whatever credentials ``.env`` already had.
-
-The module is intentionally subprocess-driven rather than going through
-the ``bitwarden-sdk-secrets`` Python package: one cross-platform binary
-is easier to lazy-install than a wheels-with-Rust-extension dependency.
+"""
+Bitwarden 集成 —— 密码库的安全凭证读取。
 """
 
 from __future__ import annotations

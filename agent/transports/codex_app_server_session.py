@@ -1,25 +1,5 @@
-"""Session adapter for codex app-server runtime.
-
-Owns one Codex thread per Hermes session. Drives `turn/start`, consumes
-streaming notifications via CodexEventProjector, handles server-initiated
-approval requests (apply_patch, exec command), translates cancellation,
-and returns a clean turn result that AIAgent.run_conversation() can splice
-into its `messages` list.
-
-Lifecycle:
-    session = CodexAppServerSession(cwd="/home/x/proj")
-    session.ensure_started()                              # spawns + handshake + thread/start
-    result = session.run_turn(user_input="hello")         # blocks until turn/completed
-    # result.final_text          → assistant text returned to caller
-    # result.projected_messages  → list of {role, content, ...} for messages list
-    # result.tool_iterations     → how many tool-shaped items completed (skill nudge counter)
-    # result.interrupted         → True if Ctrl+C / interrupt_requested fired mid-turn
-    session.close()                                       # tears down subprocess
-
-Threading model: the adapter is single-threaded from the caller's perspective.
-The underlying CodexAppServerClient owns its own reader threads but exposes
-blocking-with-timeout queues that this adapter polls in a loop, so the run_turn
-call is synchronous and behaves like AIAgent's existing chat_completions loop.
+"""
+Codex 会话 —— App Server 的状态管理。
 """
 
 from __future__ import annotations

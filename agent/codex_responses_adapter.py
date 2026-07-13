@@ -1,11 +1,5 @@
-"""Codex Responses API adapter.
-
-Pure format-conversion and normalization logic for the OpenAI Responses API
-(used by OpenAI Codex, xAI, GitHub Models, and other Responses-compatible endpoints).
-
-Extracted from run_agent.py to isolate Responses API-specific logic from the
-core agent loop. All functions are stateless — they operate on the data passed
-in and return transformed results.
+"""
+Codex 响应适配 —— OpenAI Responses API 的流式处理。
 """
 
 from __future__ import annotations

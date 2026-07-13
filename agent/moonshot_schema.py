@@ -1,24 +1,5 @@
-"""Helpers for translating OpenAI-style tool schemas to Moonshot's schema subset.
-
-Moonshot (Kimi) accepts a stricter subset of JSON Schema than standard OpenAI
-tool calling.  Requests that violate it fail with HTTP 400:
-
-    tools.function.parameters is not a valid moonshot flavored json schema,
-    details: <...>
-
-Known rejection modes documented at
-https://forum.moonshot.ai/t/tool-calling-specification-violation-on-moonshot-api/102
-and MoonshotAI/kimi-cli#1595:
-
-1. Every property schema must carry a ``type``.  Standard JSON Schema allows
-   type to be omitted (the value is then unconstrained); Moonshot refuses.
-2. When ``anyOf`` is used, ``type`` must be on the ``anyOf`` children, not
-   the parent.  Presence of both causes "type should be defined in anyOf
-   items instead of the parent schema".
-
-The ``#/definitions/...`` → ``#/$defs/...`` rewrite for draft-07 refs is
-handled separately in ``tools/mcp_tool._normalize_mcp_input_schema`` so it
-applies at MCP registration time for all providers.
+"""
+Moonshot 模式 —— Kimi API 的工具格式转换。
 """
 
 from __future__ import annotations

@@ -1,18 +1,5 @@
-"""Replay-history sanitization shared across resume code paths.
-
-When a session's last turn dies mid-tool-loop — the process is killed by a
-restart/shutdown command, a stale-timeout fires, or an interrupt lands before
-the tool result is written — the persisted transcript can end with a dangling
-``assistant(tool_calls)`` (no matching ``tool`` answer) or an interrupted
-``assistant→tool`` block.  On resume the model sees that broken tail and
-re-issues the unanswered call, producing an endless "thinking"/reboot loop
-(#49201, #29086).
-
-These pure helpers strip those tails before the history is replayed to the
-model.  They were originally local to ``gateway/run.py`` (which fixed the
-messaging-gateway path) and are extracted here so every resume surface — the
-messaging gateway AND the TUI/WebUI gateway — shares the same cleanup instead
-of the WebUI path silently skipping it.
+"""
+回放清理 —— 会话恢复时的状态一致性修复。
 """
 
 from __future__ import annotations

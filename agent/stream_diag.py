@@ -1,15 +1,5 @@
-"""Stream diagnostics — per-attempt counters, exception chains, retry logging.
-
-When a streaming chat-completions request dies mid-response, we want to
-know why: which Cloudflare edge served the request, which OpenRouter
-downstream provider answered, how many bytes/chunks we got before the
-drop, the HTTP status, the underlying httpx error class.  These helpers
-collect that info and emit it both to ``agent.log`` (full detail) and to
-the user-facing status line (compact).
-
-All helpers are extracted from :class:`AIAgent` for cleanliness.
-``run_agent`` keeps thin forwarder methods so existing call sites and
-tests that patch ``run_agent.<helper>`` keep working.
+"""
+流诊断 —— 实时 token 流的监控与调试。
 """
 
 from __future__ import annotations
