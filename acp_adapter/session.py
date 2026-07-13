@@ -1,3 +1,25 @@
+# =============================================================================
+# acp_adapter/session.py - ACP 会话管理器
+# =============================================================================
+#
+# 本模块将 ACP 会话映射到 Hermes AIAgent 实例。
+#
+# 会话持久化：
+#   - 会话保存到共享 SessionDB（~/.hermes/state.db）
+#   - 进程重启后会话仍然存在
+#   - 可在 session_search 中被找到
+#
+# 恢复机制：
+#   - 编辑器重连后，load_session / resume_session 调用
+#   - 从数据库恢复完整的对话历史
+#   - WSL 路径转换（Windows 和 Linux 路径互转）
+#
+# 调用关系：
+#     server.py 处理请求
+#         → session.py 管理会话映射
+#             → 持久化到 SessionDB
+# =============================================================================
+
 """ACP session manager — maps ACP sessions to Hermes AIAgent instances.
 
 Sessions are persisted to the shared SessionDB (``~/.hermes/state.db``) so they

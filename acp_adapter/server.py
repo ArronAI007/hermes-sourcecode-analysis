@@ -1,3 +1,26 @@
+# =============================================================================
+# acp_adapter/server.py - ACP Agent 服务器
+# =============================================================================
+#
+# 本模块实现 ACP Agent 服务器，通过 Agent Client Protocol 暴露 Hermes Agent。
+#
+# 核心功能：
+#   - JSON-RPC 2.0 协议处理
+#   - 异步消息处理
+#   - 工具调用路由
+#   - 会话管理
+#
+# 传输协议：
+#   - 支持 stdio、HTTP、WebSocket 等多种传输方式
+#   - 使用 acp 库处理协议编解码
+#
+# 调用关系：
+#     entry.py:main()
+#         → server.py:ACPServer
+#             → 处理 JSON-RPC 请求
+#             → 路由到 AIAgent
+# =============================================================================
+
 """ACP agent server — exposes Hermes Agent via the Agent Client Protocol."""
 
 from __future__ import annotations

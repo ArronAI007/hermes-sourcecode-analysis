@@ -1,3 +1,32 @@
+# =============================================================================
+# acp_adapter/entry.py - ACP 适配器 CLI 入口点
+# =============================================================================
+#
+# 本模块是 ACP 适配器的命令行入口点。
+#
+# 职责：
+#   1. 从 ~/.hermes/.env 加载环境变量
+#   2. 配置日志输出到 stderr（stdout 保留给 ACP JSON-RPC 传输）
+#   3. 启动 ACP Agent 服务器
+#
+# 设计考虑：
+#   - stdout 保留给协议通信，避免污染 JSON-RPC 数据流
+#   - 日志输出到 stderr，便于日志重定向
+#   - hermes_bootstrap.harden_import_path() 防止工作目录同名模块覆盖
+#
+# 使用方式：
+#     python -m acp_adapter.entry
+#     hermes acp
+#     hermes-acp
+#
+# 调用关系：
+#     hermes acp
+#         → entry.py:main()
+#             → 加载环境变量
+#             → 配置日志（stderr）
+#             → 启动 acp_adapter/server.py
+# =============================================================================
+
 """CLI entry point for the hermes-agent ACP adapter.
 
 Loads environment variables from ``~/.hermes/.env``, configures logging

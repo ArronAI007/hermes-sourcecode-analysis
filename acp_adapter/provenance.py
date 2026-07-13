@@ -1,3 +1,20 @@
+# =============================================================================
+# acp_adapter/provenance.py - ACP 会话溯源
+# =============================================================================
+#
+# 本模块从现有的压缩链推导 ACP 会话的溯源元数据。
+#
+# 设计特点：
+#   - 增量扩展，ACP 客户端会忽略不理解的字段
+#   - 无需新的持久化状态，从 sessions 表实时推导
+#   - parent_session_id 和 end_reason 已建模压缩-继续链
+#
+# 用途：
+#   - 显示会话的内部 ID 和谱系根
+#   - 压缩旋转后仍可追溯原始会话
+#   - 无需解析状态文本或读取 state.db
+# =============================================================================
+
 """Derive ACP session-provenance metadata from the existing compression chain.
 
 This is an additive Hermes extension surfaced under ACP ``_meta.hermes`` so

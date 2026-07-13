@@ -1,3 +1,21 @@
+# =============================================================================
+# acp_adapter/events.py - ACP 事件回调工厂
+# =============================================================================
+#
+# 本模块提供 AIAgent 事件到 ACP 通知的桥接。
+#
+# 事件类型：
+#   - 工具开始/完成
+#   - 计划更新
+#   - 消息分块
+#   - 错误通知
+#
+# 线程安全：
+#   - AIAgent 运行在工作线程
+#   - 事件循环在主线程
+#   - 使用 asyncio.run_coroutine_threadsafe() 线程安全地推送更新
+# =============================================================================
+
 """Callback factories for bridging AIAgent events to ACP notifications.
 
 Each factory returns a callable with the signature that AIAgent expects

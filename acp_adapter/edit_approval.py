@@ -1,3 +1,18 @@
+# =============================================================================
+# acp_adapter/edit_approval.py - ACP 编辑审批辅助函数
+# =============================================================================
+#
+# 本模块在 ACP 运行期间隔离编辑审批请求。
+#
+# 设计考虑：
+#   - 与通用工具注册表故意隔离
+#   - ACP 在 ContextVar 中绑定编辑审批请求
+#   - CLI、gateway 等其他会话不设置此变量，因此绕过此守卫
+#
+# EditProposal 数据类：
+#   - 存储提议的编辑信息（工具名、路径等）
+# =============================================================================
+
 """Pre-execution ACP edit approval helpers.
 
 This module is intentionally isolated from the generic tool registry.  ACP binds

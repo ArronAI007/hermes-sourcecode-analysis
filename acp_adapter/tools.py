@@ -1,3 +1,28 @@
+# =============================================================================
+# acp_adapter/tools.py - ACP 工具调用辅助函数
+# =============================================================================
+#
+# 本模块提供 Hermes 工具到 ACP ToolKind 的映射。
+#
+# 工具映射表（TOOL_KIND_MAP）：
+#   - read_file → "read"
+#   - write_file → "edit"
+#   - terminal → "execute"
+#   - browser_navigate → "fetch"
+#   - delegate_task → "execute"
+#   - ... 等等
+#
+# 用途：
+#   - 将 Hermes 工具分类到 ACP 标准类型
+#   - 构建 ACP 格式的工具内容
+#   - 工具调用进度报告
+#
+# 调用关系：
+#     server.py 处理工具调用
+#         → tools.py 映射工具类型
+#             → 构建 ACP 格式响应
+# =============================================================================
+
 """ACP tool-call helpers for mapping hermes tools to ACP ToolKind and building content."""
 
 from __future__ import annotations

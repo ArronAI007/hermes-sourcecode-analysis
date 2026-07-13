@@ -1,3 +1,19 @@
+# =============================================================================
+# acp_adapter/auth.py - ACP 认证辅助函数
+# =============================================================================
+#
+# 本模块提供 ACP 协议的认证方法检测和广告。
+#
+# 核心功能：
+#   - detect_provider(): 检测活动的 Hermes 运行时提供商
+#   - has_provider(): 检查是否存在可用的运行时凭证
+#   - build_auth_methods(): 构建 ACP 注册兼容的认证方法列表
+#
+# 特殊处理：
+#   - Azure Foundry Entra ID bearer token 提供商被视为有效凭证
+#   - 没有配置时，广告 terminal setup 方法引导用户配置
+# =============================================================================
+
 """ACP auth helpers — detect and advertise Hermes authentication methods."""
 
 from __future__ import annotations

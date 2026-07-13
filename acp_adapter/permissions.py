@@ -1,3 +1,22 @@
+# =============================================================================
+# acp_adapter/permissions.py - ACP 权限桥接
+# =============================================================================
+#
+# 本模块桥接 ACP 权限系统和 Hermes 危险命令审批。
+#
+# 权限选项：
+#   - allow_once: 仅允许一次
+#   - allow_session: 会话期间允许
+#   - allow_always: 永久允许
+#   - deny: 拒绝
+#   - deny_always: 永久拒绝
+#
+# 调用关系：
+#     tools/approval.py 请求审批
+#         → permissions.py 转换权限选项
+#             → ACP 客户端显示权限对话框
+# =============================================================================
+
 """ACP permission bridging for Hermes dangerous-command approvals."""
 
 from __future__ import annotations
