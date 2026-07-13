@@ -1,3 +1,27 @@
+# =============================================================================
+# hermes_cli/ - Hermes CLI 主包
+# =============================================================================
+#
+# 本模块是 Hermes Agent 的统一命令行界面入口。
+#
+# 子命令：
+#   - hermes chat         # 交互式聊天（等同于 ./hermes）
+#   - hermes gateway      # 前台运行网关
+#   - hermes gateway start # 启动网关服务
+#   - hermes gateway stop  # 停止网关服务
+#   - hermes setup        # 交互式设置向导
+#   - hermes status       # 显示所有组件状态
+#   - hermes cron         # 管理定时任务
+#
+# 版本信息：
+#   - __version__ = "0.18.0"
+#   - __release_date__ = "2026.7.1"
+#
+# UTF-8 保护：
+#   - _ensure_utf8() 在导入时强制修复 stdout/stderr 编码
+#   - 防止非 UTF-8 环境（Windows cp1252、Linux latin-1）崩溃
+# =============================================================================
+
 """
 Hermes CLI - Unified command-line interface for Hermes Agent.
 

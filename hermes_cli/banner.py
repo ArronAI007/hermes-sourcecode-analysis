@@ -1,3 +1,20 @@
+# =============================================================================
+# hermes_cli/banner.py - 欢迎横幅和 ASCII 艺术
+# =============================================================================
+#
+# 本模块提供 CLI 欢迎横幅、ASCII 艺术、技能摘要和更新检查。
+#
+# 特点：
+#   - 纯展示函数，无 HermesCLI 状态依赖
+#   - 延迟导入 rich 和 prompt_toolkit（避免 TUI 网关启动延迟）
+#   - ANSI 颜色支持皮肤感知
+#
+# 主要功能：
+#   - 欢迎横幅和品牌展示
+#   - 技能摘要显示
+#   - 版本更新检查
+# =============================================================================
+
 """Welcome banner, ASCII art, skills summary, and update check for the CLI.
 
 Pure display functions with no HermesCLI state dependency.

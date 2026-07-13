@@ -1,3 +1,25 @@
+# =============================================================================
+# hermes_cli/backup.py - 备份和导入命令
+# =============================================================================
+#
+# 本模块实现 hermes backup 和 hermes import 命令。
+#
+# hermes backup：
+#   - 创建整个 ~/.hermes/ 目录的 zip 存档
+#   - 排除 hermes-agent 仓库和临时文件
+#   - 使用 sqlite3.backup() 确保数据库一致性
+#
+# hermes import：
+#   - 从备份 zip 恢复
+#   - 覆盖到当前 HERMES_HOME 根目录
+#
+# 排除规则：
+#   - hermes-agent 代码库（重新克隆）
+#   - __pycache__, .git, node_modules（重新生成）
+#   - 依赖目录 .venv, venv, site-packages
+#   - 缓存 .cache, .pytest_cache 等
+# =============================================================================
+
 """
 Backup and import commands for hermes CLI.
 
